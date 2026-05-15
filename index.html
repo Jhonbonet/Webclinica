@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASENORTE · Sistema Clínico</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       PANTALLA DE LOGIN
+  ══════════════════════════════════════════ -->
+  <section id="loginScreen" class="screen active">
+    <div class="login-bg">
+      <div class="login-blob blob1"></div>
+      <div class="login-blob blob2"></div>
+      <div class="login-blob blob3"></div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-mark">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4z" fill="var(--accent)"/>
+            <path d="M20 11v18M11 20h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-name">ASENORTE</h1>
+          <p class="brand-sub">Corporación Educativa</p>
+        </div>
+      </div>
+
+      <h2 class="login-title">Bienvenido/<wbr>a</h2>
+      <p class="login-desc">Ingresa tus credenciales para acceder al Sistema de Historias Clínicas.</p>
+
+      <div class="form-group">
+        <label for="loginUser">Usuario</label>
+        <input type="text" id="loginUser" placeholder="código estudiantil" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="loginPass">Contraseña</label>
+        <div class="input-wrapper">
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" />
+          <button class="toggle-pass" type="button" onclick="togglePass()" aria-label="Ver contraseña">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="loginError" class="error-msg hidden"></div>
+
+      <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
+        <span>Iniciar sesión</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+
+      <p class="login-footer">
+        ¿Problemas para ingresar? Contacta a tu docente.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       PANTALLA PRINCIPAL / DASHBOARD
+  ══════════════════════════════════════════ -->
+  <section id="dashboardScreen" class="screen">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo-mark small">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4z" fill="var(--accent)"/><path d="M20 11v18M11 20h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name small">ASENORTE</span>
+      </div>
+      <nav class="topnav">
+        <button class="nav-btn active" onclick="showTab('tab-pacientes')">Pacientes</button>
+        <button class="nav-btn" onclick="showTab('tab-historia')">Nueva HC</button>
+        <button class="nav-btn" onclick="showTab('tab-buscar')">Buscar</button>
+      </nav>
+      <div class="topbar-right">
+        <span id="welcomeUser" class="user-badge"></span>
+        <button class="btn-logout" onclick="handleLogout()">Salir</button>
+      </div>
+    </header>
+
+    <!-- Mobile nav -->
+    <nav class="bottom-nav">
+      <button onclick="showTab('tab-pacientes')" class="bnav-btn active" data-tab="tab-pacientes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Pacientes</span>
+      </button>
+      <button onclick="showTab('tab-historia')" class="bnav-btn" data-tab="tab-historia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        <span>Nueva HC</span>
+      </button>
+      <button onclick="showTab('tab-buscar')" class="bnav-btn" data-tab="tab-buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Buscar</span>
+      </button>
+    </nav>
+
+    <main class="main-content">
+
+      <!-- ── TAB: LISTA DE PACIENTES ── -->
+      <div id="tab-pacientes" class="tab-panel active">
+        <div class="panel-header">
+          <h2>Historias Clínicas</h2>
+          <button class="btn-accent" onclick="loadPatients()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <div id="loadingMsg" class="loading-msg hidden">
+          <div class="spinner"></div>
+          <span>Cargando historias clínicas…</span>
+        </div>
+
+        <div id="patientList" class="patient-grid"></div>
+        <p id="emptyState" class="empty-state hidden">No hay historias clínicas registradas aún.</p>
+      </div>
+
+      <!-- ── TAB: NUEVA HISTORIA CLÍNICA ── -->
+      <div id="tab-historia" class="tab-panel">
+        <div class="panel-header">
+          <h2>Nueva Historia Clínica</h2>
+        </div>
+
+        <div class="hc-form-grid">
+
+          <!-- Sección 1: Datos del paciente -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <span class="form-card-num">01</span>
+              <h3>Datos del Paciente</h3>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre completo *</label>
+                <input type="text" id="hcNombre" placeholder="Ej. María García López" />
+              </div>
+              <div class="form-group">
+                <label>N.° de identificación *</label>
+                <input type="text" id="hcId" placeholder="Cédula / pasaporte" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha de nacimiento</label>
+                <input type="date" id="hcFechaNac" />
+              </div>
+              <div class="form-group">
+                <label>Sexo</label>
+                <select id="hcSexo">
+                  <option value="">Seleccionar</option>
+                  <option>Femenino</option>
+                  <option>Masculino</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Grupo sanguíneo</label>
+                <select id="hcGrupoSanguineo">
+                  <option value="">—</option>
+                  <option>A+</option><option>A-</option>
+                  <option>B+</option><option>B-</option>
+                  <option>AB+</option><option>AB-</option>
+                  <option>O+</option><option>O-</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Dirección / Procedencia</label>
+              <input type="text" id="hcDireccion" placeholder="Ciudad, barrio" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="hcTelefono" placeholder="+57 300 000 0000" />
+              </div>
+              <div class="form-group">
+                <label>Eps / Aseguradora</label>
+                <input type="text" id="hcEps" placeholder="Nombre de la EPS" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección 2: Motivo de consulta -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <span class="form-card-num">02</span>
+              <h3>Motivo de Consulta</h3>
+            </div>
+            <div class="form-group">
+              <label>Motivo principal *</label>
+              <textarea id="hcMotivo" rows="3" placeholder="Describe el motivo de la consulta con palabras del paciente…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Enfermedad actual</label>
+              <textarea id="hcEnfermedad" rows="4" placeholder="Descripción cronológica de la enfermedad actual…"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Antecedentes personales</label>
+                <textarea id="hcAntPersonales" rows="3" placeholder="Enfermedades previas, cirugías, hospitalizaciones…"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Antecedentes familiares</label>
+                <textarea id="hcAntFamiliares" rows="3" placeholder="Enfermedades hereditarias relevantes…"></textarea>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Alergias conocidas</label>
+              <input type="text" id="hcAlergias" placeholder="Medicamentos, alimentos, otros" />
+            </div>
+          </div>
+
+          <!-- Sección 3: Signos vitales -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <span class="form-card-num">03</span>
+              <h3>Signos Vitales</h3>
+            </div>
+            <div class="vitals-grid">
+              <div class="vital-item">
+                <label>Temp. (°C)</label>
+                <input type="number" id="svTemp" step="0.1" min="34" max="42" placeholder="37.0" />
+                <span class="vital-icon">🌡️</span>
+              </div>
+              <div class="vital-item">
+                <label>FC (lpm)</label>
+                <input type="number" id="svFC" min="30" max="250" placeholder="80" />
+                <span class="vital-icon">❤️</span>
+              </div>
+              <div class="vital-item">
+                <label>FR (rpm)</label>
+                <input type="number" id="svFR" min="8" max="40" placeholder="16" />
+                <span class="vital-icon">🫁</span>
+              </div>
+              <div class="vital-item">
+                <label>PA (mmHg)</label>
+                <input type="text" id="svPA" placeholder="120/80" />
+                <span class="vital-icon">💉</span>
+              </div>
+              <div class="vital-item">
+                <label>SpO₂ (%)</label>
+                <input type="number" id="svSpo2" min="50" max="100" placeholder="98" />
+                <span class="vital-icon">🩺</span>
+              </div>
+              <div class="vital-item">
+                <label>Peso (kg)</label>
+                <input type="number" id="svPeso" step="0.1" min="1" max="300" placeholder="65.0" />
+                <span class="vital-icon">⚖️</span>
+              </div>
+              <div class="vital-item">
+                <label>Talla (cm)</label>
+                <input type="number" id="svTalla" min="30" max="250" placeholder="165" />
+                <span class="vital-icon">📏</span>
+              </div>
+              <div class="vital-item">
+                <label>Glucemia (mg/dl)</label>
+                <input type="number" id="svGlucemia" min="10" max="600" placeholder="100" />
+                <span class="vital-icon">🩸</span>
+              </div>
+            </div>
+
+            <!-- IMC calculado -->
+            <div class="imc-display" id="imcDisplay">
+              <span>IMC: </span><strong id="imcVal">—</strong>
+              <span id="imcCategoria" class="imc-cat"></span>
+            </div>
+          </div>
+
+          <!-- Sección 4: Examen físico y plan -->
+          <div class="form-card">
+            <div class="form-card-header">
+              <span class="form-card-num">04</span>
+              <h3>Examen Físico y Plan</h3>
+            </div>
+            <div class="form-group">
+              <label>Examen físico</label>
+              <textarea id="hcExamenFisico" rows="4" placeholder="Hallazgos del examen físico por sistemas…"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Diagnóstico presuntivo</label>
+                <textarea id="hcDiagnostico" rows="3" placeholder="CIE-10 / descripción diagnóstica…"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Plan / Intervenciones</label>
+                <textarea id="hcPlan" rows="3" placeholder="Medicamentos, indicaciones, referencia…"></textarea>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Observaciones del estudiante</label>
+              <textarea id="hcObservaciones" rows="2" placeholder="Notas adicionales del proceso de práctica…"></textarea>
+            </div>
+          </div>
+
+        </div><!-- /hc-form-grid -->
+
+        <div id="formError" class="error-msg hidden"></div>
+        <div id="formSuccess" class="success-msg hidden"></div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="clearForm()">Limpiar</button>
+          <button class="btn-primary" id="saveBtn" onclick="savePatient()">
+            <span>Guardar Historia Clínica</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── TAB: BUSCAR ── -->
+      <div id="tab-buscar" class="tab-panel">
+        <div class="panel-header">
+          <h2>Buscar Historia Clínica</h2>
+        </div>
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Buscar por nombre, ID, diagnóstico…" oninput="searchPatients()" />
+        </div>
+        <div id="searchResults" class="patient-grid"></div>
+        <p id="searchEmpty" class="empty-state hidden">No se encontraron resultados.</p>
+      </div>
+
+    </main>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       MODAL: DETALLE DE HISTORIA CLÍNICA
+  ══════════════════════════════════════════ -->
+  <div id="hcModal" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
