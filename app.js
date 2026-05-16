@@ -5,17 +5,10 @@
 ═══════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────
-// ⚙️  CONFIGURACIÓN  ← EDITA ESTOS VALORES
+// ⚙️  CONFIGURACIÓN
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
-  /**
-   * URL del Web App de Google Apps Script.
-   * Pasos para obtenerla:
-   *   1. Copia el código de Code.gs en un nuevo proyecto de Apps Script.
-   *   2. "Implementar > Nueva implementación" → tipo Web App.
-   *   3. Ejecutar como: "Yo" | Acceso: "Cualquier persona".
-   *   4. Copia la URL generada y pégala aquí.
-   */
+  // URL del Web App de Google Apps Script.
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw92AhlkfyGqCnAW22snLRqCl9irW-HHzneTKi8FiytD1YfixqNY4OWAiEs4OQrift1zA/exec",
 
   // Nombre de la hoja de usuarios dentro del Spreadsheet
@@ -69,7 +62,8 @@ async function handleLogin() {
       password,
     });
 
-    const res  = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`);
+    // Se añade el modo 'cors' explícitamente para alinearse con la respuesta de Google
+    const res  = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "cors" });
     const data = await res.json();
 
     if (data.success) {
@@ -81,7 +75,7 @@ async function handleLogin() {
     }
   } catch (err) {
     console.error(err);
-    showError(errorEl, "No se pudo conectar al servidor. Verifica la URL del Apps Script.");
+    showError(errorEl, "No se pudo conectar al servidor. Verifica la URL del Apps Script o vuelve a publicar el script.");
   } finally {
     setLoading(btn, false, `<span>Iniciar sesión</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -117,7 +111,8 @@ function openDashboard() {
   loadPatients();
 }
 
-function showTab(tabId) {
+// Declarada de forma global para que el HTML pueda acceder a ella sin problemas
+window.showTab = function(tabId) {
   // Paneles
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.getElementById(tabId).classList.add("active");
@@ -148,7 +143,7 @@ async function loadPatients() {
 
   try {
     const params = new URLSearchParams({ action: "getHistorias" });
-    const res    = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`);
+    const res    = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "cors" });
     const data   = await res.json();
 
     loader.classList.add("hidden");
@@ -221,23 +216,22 @@ async function savePatient() {
   setLoading(btn, true, "Guardando…");
 
   try {
+    // Las peticiones POST hacia Apps Script requieren redireccionamiento automático por parte del navegador
     const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
+      mode: "no-cors", 
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(payload),
     });
-    const data = await res.json();
 
-    if (data.success) {
-      successEl.textContent = "✅ Historia clínica guardada exitosamente en Google Sheets.";
-      successEl.classList.remove("hidden");
-      showToast("Historia clínica guardada ✅");
-      clearForm();
-      // Recargar lista
-      setTimeout(() => loadPatients(), 1000);
-    } else {
-      showError(errorEl, data.message || "No se pudo guardar. Intenta de nuevo.");
-    }
+    // Con mode: 'no-cors', la respuesta viene opaca, asumimos éxito si la petición no falló por red
+    successEl.textContent = "✅ Petición enviada. Revisa tu Google Sheets para verificar el registro.";
+    successEl.classList.remove("hidden");
+    showToast("Historia clínica enviada ✅");
+    clearForm();
+    // Recargar lista después de un breve delay
+    setTimeout(() => loadPatients(), 1500);
+
   } catch (err) {
     console.error(err);
     showError(errorEl, "Error de conexión con Google Sheets.");
@@ -291,9 +285,9 @@ function buildPayload(nombre, identificacion, motivo) {
 // 🔍  BUSCAR
 // ─────────────────────────────────────────────────────────────
 function searchPatients() {
-  const q      = document.getElementById("searchInput").value.trim().toLowerCase();
-  const res    = document.getElementById("searchResults");
-  const empty  = document.getElementById("searchEmpty");
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const res = document.getElementById("searchResults");
+  const empty = document.getElementById("searchEmpty");
 
   res.innerHTML  = "";
   empty.classList.add("hidden");
