@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
   // Reemplaza esta URL únicamente si cambiaste de proyecto en Apps Script
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw92AhlkfyGqCnAW22snLRqCl9irW-HHzneTKi8FiytD1YfixqNY4OWAiEs4OQrift1zA/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRM0Ym08ggKcWM2FNg3t50IrZfzIg2H_YpsQRBuF171rZIuNcsqlGlDAlI5g_EQNMbWA/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
