@@ -5,23 +5,11 @@
 ═══════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────
-// ⚙️  CONFIGURACIÓN  ← EDITA ESTOS VALORES
+// ⚙️  CONFIGURACIÓN  ← EDITA ESTE VALOR
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
-  /**
-   * URL del Web App de Google Apps Script.
-   * Pasos para obtenerla:
-   *   1. Copia el código de Code.gs en un nuevo proyecto de Apps Script.
-   *   2. "Implementar > Nueva implementación" → tipo Web App.
-   *   3. Ejecutar como: "Yo" | Acceso: "Cualquier persona".
-   *   4. Copia la URL generada y pégala aquí.
-   */
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzYihLfrM1_UZ6oWgl16ICYAEeYuHwIlVbhJDWXnZJuc48sdHlEtLtam4qeRE_159SO3w/exec",
-
-  // Nombre de la hoja de usuarios dentro del Spreadsheet
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwf6FtniL2cY8V-6Zp6H4RhpmCaOIMGduyQe19KnSJd_u24ISof2a3R1rARNTMl00Be/exec",
   SHEET_USUARIOS:  "Usuarios",
-
-  // Nombre de la hoja de historias clínicas
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
 
@@ -29,19 +17,29 @@ const CONFIG = {
 // 🔐  SESIÓN
 // ─────────────────────────────────────────────────────────────
 let currentUser = null;
-let allPatients  = [];  // caché local de historias
+let allPatients  = [];
 
-/** Verifica si existe sesión guardada al cargar la página */
+// ── Un único DOMContentLoaded ──────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  const saved = sessionStorage.getItem("asenorte_user");
-  if (saved) {
-    currentUser = JSON.parse(saved);
-    openDashboard();
+  // Restaurar sesión si existe
+  try {
+    const saved = sessionStorage.getItem("asenorte_user");
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      openDashboard();
+    }
+  } catch (e) {
+    sessionStorage.removeItem("asenorte_user");
   }
 
-  // Cálculo automático de IMC cuando cambian peso/talla
+  // Cálculo automático de IMC
   document.getElementById("svPeso").addEventListener("input", calcIMC);
   document.getElementById("svTalla").addEventListener("input", calcIMC);
+
+  // Enter en contraseña dispara login
+  document.getElementById("loginPass").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleLogin();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -53,22 +51,17 @@ async function handleLogin() {
   const errorEl  = document.getElementById("loginError");
   const btn      = document.getElementById("loginBtn");
 
-  errorEl.classList.add("hidden");
+  hide(errorEl);
 
   if (!usuario || !password) {
     showError(errorEl, "Por favor ingresa usuario y contraseña.");
     return;
   }
 
-  setLoading(btn, true, "Verificando…");
+  setLoading(btn, true, "");
 
   try {
-    const params = new URLSearchParams({
-      action:   "login",
-      usuario,
-      password,
-    });
-
+    const params = new URLSearchParams({ action: "login", usuario, password });
     const res  = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`);
     const data = await res.json();
 
@@ -80,7 +73,7 @@ async function handleLogin() {
       showError(errorEl, data.message || "Credenciales incorrectas.");
     }
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
     showError(errorEl, "No se pudo conectar al servidor. Verifica la URL del Apps Script.");
   } finally {
     setLoading(btn, false, `<span>Iniciar sesión</span>
@@ -96,19 +89,17 @@ function handleLogout() {
   showScreen("loginScreen");
 }
 
-// Permite presionar Enter en el campo de contraseña
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loginPass").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") handleLogin();
-  });
-});
-
 // ─────────────────────────────────────────────────────────────
 // 🖥️  NAVEGACIÓN DE PANTALLAS Y TABS
 // ─────────────────────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".screen").forEach(s => {
+    s.style.display = "none";
+    s.classList.remove("active");
+  });
+  const target = document.getElementById(id);
+  target.style.display = id === "loginScreen" ? "flex" : "block";
+  target.classList.add("active");
 }
 
 function openDashboard() {
@@ -119,13 +110,18 @@ function openDashboard() {
 
 function showTab(tabId) {
   // Paneles
-  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-  document.getElementById(tabId).classList.add("active");
+  document.querySelectorAll(".tab-panel").forEach(p => {
+    p.style.display = "none";
+    p.classList.remove("active");
+  });
+  const panel = document.getElementById(tabId);
+  panel.style.display = "block";
+  panel.classList.add("active");
 
   // Nav desktop
+  const desktopTabs = ["tab-pacientes", "tab-historia", "tab-buscar"];
   document.querySelectorAll(".nav-btn").forEach((btn, i) => {
-    const tabs = ["tab-pacientes", "tab-historia", "tab-buscar"];
-    btn.classList.toggle("active", tabs[i] === tabId);
+    btn.classList.toggle("active", desktopTabs[i] === tabId);
   });
 
   // Nav mobile
@@ -143,33 +139,32 @@ async function loadPatients() {
   const loader = document.getElementById("loadingMsg");
 
   list.innerHTML = "";
-  empty.classList.add("hidden");
-  loader.classList.remove("hidden");
+  hide(empty);
+  show(loader);
 
   try {
     const params = new URLSearchParams({ action: "getHistorias" });
     const res    = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`);
     const data   = await res.json();
 
-    loader.classList.add("hidden");
+    hide(loader);
 
-    if (data.success && data.historias.length > 0) {
+    if (data.success && data.historias && data.historias.length > 0) {
       allPatients = data.historias;
       renderPatientCards(allPatients, list);
     } else {
       allPatients = [];
-      empty.classList.remove("hidden");
+      show(empty);
     }
   } catch (err) {
-    loader.classList.add("hidden");
-    console.error(err);
-    list.innerHTML = `<p style="color:var(--danger);font-size:.88rem;">
+    hide(loader);
+    console.error("loadPatients error:", err);
+    list.innerHTML = `<p style="color:var(--danger);font-size:.88rem;padding:1rem 0;">
       ⚠️ Error al cargar datos. Verifica la conexión con Google Sheets.
     </p>`;
   }
 }
 
-/** Renderiza tarjetas de pacientes */
 function renderPatientCards(patients, container) {
   container.innerHTML = "";
   patients.forEach(p => {
@@ -180,14 +175,14 @@ function renderPatientCards(patients, container) {
     card.innerHTML = `
       <div class="pc-top">
         <div class="pc-avatar">${initials}</div>
-        <span class="pc-badge">${p.sexo || "—"}</span>
+        <span class="pc-badge">${sanitize(p.sexo || "—")}</span>
       </div>
       <div class="pc-name">${sanitize(p.nombre)}</div>
       <div class="pc-id">ID: ${sanitize(p.identificacion)}</div>
       ${p.diagnostico ? `<div class="pc-diag">${sanitize(p.diagnostico)}</div>` : ""}
       <div class="pc-meta">
-        ${p.eps    ? `<span class="pc-tag">🏥 ${sanitize(p.eps)}</span>`   : ""}
-        ${p.grupoSanguineo ? `<span class="pc-tag">🩸 ${sanitize(p.grupoSanguineo)}</span>` : ""}
+        ${p.eps           ? `<span class="pc-tag">🏥 ${sanitize(p.eps)}</span>` : ""}
+        ${p.grupoSanguineo? `<span class="pc-tag">🩸 ${sanitize(p.grupoSanguineo)}</span>` : ""}
         <span class="pc-tag">📅 ${formatDate(p.fecha)}</span>
         <span class="pc-tag">👩‍🎓 ${sanitize(p.registradoPor || "—")}</span>
       </div>`;
@@ -203,10 +198,9 @@ async function savePatient() {
   const successEl = document.getElementById("formSuccess");
   const btn       = document.getElementById("saveBtn");
 
-  errorEl.classList.add("hidden");
-  successEl.classList.add("hidden");
+  hide(errorEl);
+  hide(successEl);
 
-  // Validar campos obligatorios
   const nombre         = document.getElementById("hcNombre").value.trim();
   const identificacion = document.getElementById("hcId").value.trim();
   const motivo         = document.getElementById("hcMotivo").value.trim();
@@ -218,7 +212,7 @@ async function savePatient() {
 
   const payload = buildPayload(nombre, identificacion, motivo);
 
-  setLoading(btn, true, "Guardando…");
+  setLoading(btn, true, "");
 
   try {
     const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
@@ -230,16 +224,15 @@ async function savePatient() {
 
     if (data.success) {
       successEl.textContent = "✅ Historia clínica guardada exitosamente en Google Sheets.";
-      successEl.classList.remove("hidden");
+      show(successEl);
       showToast("Historia clínica guardada ✅");
       clearForm();
-      // Recargar lista
-      setTimeout(() => loadPatients(), 1000);
+      setTimeout(() => loadPatients(), 1200);
     } else {
       showError(errorEl, data.message || "No se pudo guardar. Intenta de nuevo.");
     }
   } catch (err) {
-    console.error(err);
+    console.error("savePatient error:", err);
     showError(errorEl, "Error de conexión con Google Sheets.");
   } finally {
     setLoading(btn, false, `<span>Guardar Historia Clínica</span>
@@ -250,7 +243,6 @@ async function savePatient() {
   }
 }
 
-/** Construye el objeto de datos para enviar */
 function buildPayload(nombre, identificacion, motivo) {
   return {
     action:          "saveHistoria",
@@ -265,25 +257,23 @@ function buildPayload(nombre, identificacion, motivo) {
     telefono:        document.getElementById("hcTelefono").value.trim(),
     eps:             document.getElementById("hcEps").value.trim(),
     motivo,
-    enfermedadActual:   document.getElementById("hcEnfermedad").value.trim(),
-    antPersonales:      document.getElementById("hcAntPersonales").value.trim(),
-    antFamiliares:      document.getElementById("hcAntFamiliares").value.trim(),
-    alergias:           document.getElementById("hcAlergias").value.trim(),
-    // Signos vitales
-    temperatura:  document.getElementById("svTemp").value,
-    frecCardiaca: document.getElementById("svFC").value,
-    frecResp:     document.getElementById("svFR").value,
-    presionArterial: document.getElementById("svPA").value.trim(),
-    spo2:         document.getElementById("svSpo2").value,
-    peso:         document.getElementById("svPeso").value,
-    talla:        document.getElementById("svTalla").value,
-    glucemia:     document.getElementById("svGlucemia").value,
-    imc:          document.getElementById("imcVal").textContent,
-    // Examen / diagnóstico
-    examenFisico: document.getElementById("hcExamenFisico").value.trim(),
-    diagnostico:  document.getElementById("hcDiagnostico").value.trim(),
-    plan:         document.getElementById("hcPlan").value.trim(),
-    observaciones: document.getElementById("hcObservaciones").value.trim(),
+    enfermedadActual:    document.getElementById("hcEnfermedad").value.trim(),
+    antPersonales:       document.getElementById("hcAntPersonales").value.trim(),
+    antFamiliares:       document.getElementById("hcAntFamiliares").value.trim(),
+    alergias:            document.getElementById("hcAlergias").value.trim(),
+    temperatura:         document.getElementById("svTemp").value,
+    frecCardiaca:        document.getElementById("svFC").value,
+    frecResp:            document.getElementById("svFR").value,
+    presionArterial:     document.getElementById("svPA").value.trim(),
+    spo2:                document.getElementById("svSpo2").value,
+    peso:                document.getElementById("svPeso").value,
+    talla:               document.getElementById("svTalla").value,
+    glucemia:            document.getElementById("svGlucemia").value,
+    imc:                 document.getElementById("imcVal").textContent,
+    examenFisico:        document.getElementById("hcExamenFisico").value.trim(),
+    diagnostico:         document.getElementById("hcDiagnostico").value.trim(),
+    plan:                document.getElementById("hcPlan").value.trim(),
+    observaciones:       document.getElementById("hcObservaciones").value.trim(),
   };
 }
 
@@ -291,24 +281,24 @@ function buildPayload(nombre, identificacion, motivo) {
 // 🔍  BUSCAR
 // ─────────────────────────────────────────────────────────────
 function searchPatients() {
-  const q      = document.getElementById("searchInput").value.trim().toLowerCase();
-  const res    = document.getElementById("searchResults");
-  const empty  = document.getElementById("searchEmpty");
+  const q     = document.getElementById("searchInput").value.trim().toLowerCase();
+  const res   = document.getElementById("searchResults");
+  const empty = document.getElementById("searchEmpty");
 
-  res.innerHTML  = "";
-  empty.classList.add("hidden");
+  res.innerHTML = "";
+  hide(empty);
 
   if (!q) return;
 
   const filtered = allPatients.filter(p =>
-    (p.nombre        || "").toLowerCase().includes(q) ||
-    (p.identificacion|| "").toLowerCase().includes(q) ||
-    (p.diagnostico   || "").toLowerCase().includes(q) ||
-    (p.eps           || "").toLowerCase().includes(q)
+    (p.nombre         || "").toLowerCase().includes(q) ||
+    (p.identificacion || "").toLowerCase().includes(q) ||
+    (p.diagnostico    || "").toLowerCase().includes(q) ||
+    (p.eps            || "").toLowerCase().includes(q)
   );
 
   if (filtered.length === 0) {
-    empty.classList.remove("hidden");
+    show(empty);
   } else {
     renderPatientCards(filtered, res);
   }
@@ -320,8 +310,7 @@ function searchPatients() {
 function openPatientModal(p) {
   const modal   = document.getElementById("hcModal");
   const content = document.getElementById("modalContent");
-
-  const age = calcAge(p.fechaNacimiento);
+  const age     = calcAge(p.fechaNacimiento);
 
   content.innerHTML = `
     <h2 class="modal-title">${sanitize(p.nombre)}</h2>
@@ -344,13 +333,13 @@ function openPatientModal(p) {
       <h4>Signos vitales</h4>
       <div>
         ${vitalChip("🌡️", "Temp.", p.temperatura, "°C")}
-        ${vitalChip("❤️", "FC",   p.frecCardiaca, "lpm")}
-        ${vitalChip("🫁", "FR",   p.frecResp, "rpm")}
-        ${vitalChip("💉", "PA",   p.presionArterial, "mmHg")}
+        ${vitalChip("❤️", "FC",   p.frecCardiaca, " lpm")}
+        ${vitalChip("🫁", "FR",   p.frecResp, " rpm")}
+        ${vitalChip("💉", "PA",   p.presionArterial, " mmHg")}
         ${vitalChip("🩺", "SpO₂", p.spo2, "%")}
-        ${vitalChip("⚖️", "Peso", p.peso, "kg")}
-        ${vitalChip("📏", "Talla", p.talla, "cm")}
-        ${vitalChip("🩸", "Glucemia", p.glucemia, "mg/dl")}
+        ${vitalChip("⚖️", "Peso", p.peso, " kg")}
+        ${vitalChip("📏", "Talla", p.talla, " cm")}
+        ${vitalChip("🩸", "Glucemia", p.glucemia, " mg/dl")}
         ${vitalChip("📊", "IMC",  p.imc, "")}
       </div>
     </div>
@@ -385,11 +374,11 @@ function openPatientModal(p) {
     </div>` : ""}
   `;
 
-  modal.classList.remove("hidden");
+  modal.style.display = "flex";
 }
 
 function vitalChip(icon, label, val, unit) {
-  if (!val) return "";
+  if (!val && val !== 0) return "";
   return `<span class="vital-chip">${icon} <strong>${label}</strong> ${sanitize(String(val))}${unit}</span>`;
 }
 
@@ -397,7 +386,7 @@ function closeModal(e) {
   if (e.target === document.getElementById("hcModal")) closeModalBtn();
 }
 function closeModalBtn() {
-  document.getElementById("hcModal").classList.add("hidden");
+  document.getElementById("hcModal").style.display = "none";
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -421,10 +410,10 @@ function calcIMC() {
   imcEl.textContent = imc;
 
   let label = "", css = "";
-  if      (imc < 18.5) { label = "Bajo peso";    css = "imc-bajo";   }
-  else if (imc < 25)   { label = "Normal";        css = "imc-normal"; }
-  else if (imc < 30)   { label = "Sobrepeso";     css = "imc-sobre";  }
-  else                 { label = "Obesidad";      css = "imc-obeso";  }
+  if      (imc < 18.5) { label = "Bajo peso";  css = "imc-bajo";   }
+  else if (imc < 25)   { label = "Normal";      css = "imc-normal"; }
+  else if (imc < 30)   { label = "Sobrepeso";   css = "imc-sobre";  }
+  else                 { label = "Obesidad";    css = "imc-obeso";  }
 
   catEl.textContent = label;
   catEl.className   = `imc-cat ${css}`;
@@ -445,11 +434,11 @@ function clearForm() {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-  document.getElementById("imcVal").textContent = "—";
+  document.getElementById("imcVal").textContent      = "—";
   document.getElementById("imcCategoria").textContent = "";
-  document.getElementById("imcCategoria").className = "imc-cat";
-  document.getElementById("formError").classList.add("hidden");
-  document.getElementById("formSuccess").classList.add("hidden");
+  document.getElementById("imcCategoria").className   = "imc-cat";
+  hide(document.getElementById("formError"));
+  hide(document.getElementById("formSuccess"));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -463,9 +452,16 @@ function togglePass() {
 // ─────────────────────────────────────────────────────────────
 // 🛠️  UTILIDADES
 // ─────────────────────────────────────────────────────────────
+function show(el) {
+  if (el) el.style.display = "";
+}
+function hide(el) {
+  if (el) el.style.display = "none";
+}
+
 function showError(el, msg) {
   el.textContent = msg;
-  el.classList.remove("hidden");
+  show(el);
 }
 
 function setLoading(btn, loading, html) {
@@ -478,14 +474,14 @@ function setLoading(btn, loading, html) {
 function showToast(msg, duration = 3000) {
   const toast = document.getElementById("toast");
   toast.textContent = msg;
-  toast.classList.remove("hidden");
+  show(toast);
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => toast.classList.add("hidden"), duration);
+  toast._t = setTimeout(() => hide(toast), duration);
 }
 
 function sanitize(str) {
   const div = document.createElement("div");
-  div.textContent = String(str);
+  div.textContent = String(str ?? "");
   return div.innerHTML;
 }
 
@@ -497,7 +493,7 @@ function formatDate(iso) {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleDateString("es-CO", { day:"2-digit", month:"short", year:"numeric" });
-  } catch { return iso; }
+  } catch { return String(iso); }
 }
 
 function calcAge(dob) {
