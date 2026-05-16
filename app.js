@@ -8,7 +8,7 @@
 // ⚙️  CONFIGURACIÓN
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
-  // Reemplaza esta URL únicamente si cambiaste de proyecto en Apps Script
+  // Asegúrate de actualizar esta URL si generas un nuevo ID de despliegue
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRM0Ym08ggKcWM2FNg3t50IrZfzIg2H_YpsQRBuF171rZIuNcsqlGlDAlI5g_EQNMbWA/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
@@ -31,7 +31,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// 🔑  LOGIN (CONEXIÓN ROBUSTA CORREGIDA)
+// 🔑  LOGIN (AJUSTADO PARA PROCESAR REDIRECCIONES DE GOOGLE)
 // ─────────────────────────────────────────────────────────────
 async function handleLogin() {
   const usuario  = document.getElementById("loginUser").value.trim();
@@ -55,7 +55,7 @@ async function handleLogin() {
       password: password
     });
 
-    // Modificación Crítica: 'redirect: "follow"' procesa los servidores internos de Google correctamente
+    // CRÍTICO: redirect: "follow" permite interceptar la respuesta tras el desvío de Google
     const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`, {
       method: "GET",
       mode: "cors",
@@ -63,7 +63,7 @@ async function handleLogin() {
     });
 
     if (!res.ok) {
-      throw new Error("Respuesta de servidor inválida");
+      throw new Error("Error en la respuesta del servidor");
     }
 
     const data = await res.json();
@@ -77,7 +77,7 @@ async function handleLogin() {
     }
   } catch (err) {
     console.error(err);
-    showError(errorEl, "Error de red o CORS detectado. Asegúrate de actualizar el despliegue en Google Apps Script a una 'Nueva versión'.");
+    showError(errorEl, "No se pudo conectar al servidor. Verifica la URL del Apps Script o vuelve a publicar el script.");
   } finally {
     setLoading(btn, false, `<span>Iniciar sesión</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,14 +214,14 @@ async function savePatient() {
   setLoading(btn, true, "Guardando…");
 
   try {
-    const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors", 
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(payload),
     });
 
-    successEl.textContent = "✅ Petición de guardado enviada. Los datos se procesarán en tu hoja.";
+    successEl.textContent = "✅ Petición enviada. Revisa tu Google Sheets para verificar el registro.";
     successEl.classList.remove("hidden");
     showToast("Historia clínica enviada ✅");
     clearForm();
@@ -274,7 +274,7 @@ function buildPayload(nombre, identificacion, motivo) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔍  BUSCAR
+// 🔍  BUSCAR Y VENTANAS MODALES
 // ─────────────────────────────────────────────────────────────
 function searchPatients() {
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -300,9 +300,6 @@ function searchPatients() {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🪟  MODAL DETALLE
-// ─────────────────────────────────────────────────────────────
 function openPatientModal(p) {
   const modal   = document.getElementById("hcModal");
   const content = document.getElementById("modalContent");
@@ -362,7 +359,7 @@ function closeModalBtn() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ⚕️  IMC Y UTILIDADES
+// ⚕️  IMC Y UTILIDADES MASCARAS
 // ─────────────────────────────────────────────────────────────
 function calcIMC() {
   const peso  = parseFloat(document.getElementById("svPeso").value);
