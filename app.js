@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSION CON CONTROLADOR DE OJITO)
-   Maneja login, visibilidad de clave y base de datos Sheets.
+   ASENORTE · app.js (VERSIÓN INTEGRAL ANTIDESBORDE Y ACCESO FIJO)
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
@@ -12,10 +11,10 @@ const CONFIG = {
 let currentUser = null;
 let allPatients  = [];
 
-// ── Inicialización Segura del DOM ──
+// ── Inicialización Segura y Eventos ──
 window.addEventListener("DOMContentLoaded", () => {
   
-  // 1. Asegurar estado visual correcto del Login al arrancar
+  // 1. Mostrar Login forzadamente en primer plano
   const loginScreen = document.getElementById("loginScreen");
   const dashboardScreen = document.getElementById("dashboardScreen");
   
@@ -28,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
     dashboardScreen.classList.remove("active");
   }
 
-  // 2. Funcionalidad interactiva para el OJITO de la contraseña
+  // 2. Controlador de visibilidad de contraseña (Ojito)
   const btnTogglePassword = document.getElementById("btnTogglePassword");
   const passwordInput = document.getElementById("password");
   const eyeIcon = document.getElementById("eyeIcon");
@@ -37,14 +36,12 @@ window.addEventListener("DOMContentLoaded", () => {
     btnTogglePassword.addEventListener("click", () => {
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        // Cambia el diseño del icono a ojo tachado (ocultar)
         eyeIcon.innerHTML = `
           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
           <line x1="1" y1="1" x2="23" y2="23"></line>
         `;
       } else {
         passwordInput.type = "password";
-        // Regresa al icono de ojo abierto (mostrar)
         eyeIcon.innerHTML = `
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
           <circle cx="12" cy="12" r="3"></circle>
@@ -53,7 +50,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 3. Recuperar sesión previa si existe
+  // 3. Restaurar sesión automática si existe
   try {
     const saved = sessionStorage.getItem("asenorte_user");
     if (saved) {
@@ -64,19 +61,11 @@ window.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem("asenorte_user");
   }
 
-  // 4. Captura obligatoria del formulario de acceso
-  const loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", handleLogin);
-  }
+  // 4. Capturas de Formulario
+  document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
+  document.getElementById("hcForm")?.addEventListener("submit", handleSaveHC);
 
-  // 5. Captura del formulario médico
-  const hcForm = document.getElementById("hcForm");
-  if (hcForm) {
-    hcForm.addEventListener("submit", handleSaveHC);
-  }
-
-  // 6. Monitores para el IMC automático
+  // 5. Automatización IMC
   const svPeso = document.getElementById("svPeso");
   const svTalla = document.getElementById("svTalla");
   if (svPeso) svPeso.addEventListener("input", calcIMC);
@@ -101,10 +90,10 @@ function setupNavigationByText() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔑 PROCESO DE INICIO DE SESIÓN
+// 🔑 CONTROL DE ACCESO EFECTIVO
 // ─────────────────────────────────────────────────────────────
 async function handleLogin(e) {
-  e.preventDefault(); // Detiene cualquier recarga automática del navegador
+  e.preventDefault();
   
   const userIn  = document.getElementById("username")?.value.trim();
   const passIn  = document.getElementById("password")?.value.trim();
@@ -114,13 +103,14 @@ async function handleLogin(e) {
   if (errEl) hide(errEl);
   
   if (!userIn || !passIn) {
-    if (errEl) showError(errEl, "Por favor, complete todos los campos obligatorios.");
+    if (errEl) showError(errEl, "Por favor, complete todos los campos.");
     return;
   }
 
   if (btn) setLoading(btn, true, "Iniciar Sesión");
 
   try {
+    // Envío plano compatible con el motor doPost de Google Apps Script
     const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "cors",
@@ -132,7 +122,7 @@ async function handleLogin(e) {
       })
     });
 
-    if (!response.ok) throw new Error(`HTTP Status: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
     const res = await response.json();
 
     if (res.success) {
@@ -140,11 +130,11 @@ async function handleLogin(e) {
       sessionStorage.setItem("asenorte_user", JSON.stringify(currentUser));
       openDashboard();
     } else {
-      if (errEl) showError(errEl, res.message || "Credenciales incorrectas.");
+      if (errEl) showError(errEl, res.message || "Usuario o contraseña inválidos.");
     }
   } catch (error) {
-    console.error("Error en login:", error);
-    if (errEl) showError(errEl, "Falla de comunicación con Google. Revise internet o el ID de script.");
+    console.error("Error Login:", error);
+    if (errEl) showError(errEl, "No se pudo conectar. Verifique internet o republique el Script.");
   } finally {
     if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
@@ -176,7 +166,7 @@ function logout() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📊 PANEL PRINCIPAL (DASHBOARD)
+// 📊 PANEL CONTROL (DASHBOARD)
 // ─────────────────────────────────────────────────────────────
 function openDashboard() {
   const loginScreen = document.getElementById("loginScreen");
@@ -225,7 +215,7 @@ function switchTab(tabId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📝 COMUNICACIÓN HISTORIAS CLÍNICAS
+// 📝 HISTORIAS CLÍNICAS (SHEETS)
 // ─────────────────────────────────────────────────────────────
 async function handleSaveHC(e) {
   e.preventDefault();
@@ -292,7 +282,7 @@ async function handleSaveHC(e) {
     }
   } catch (err) {
     console.error(err);
-    alert("Error de red. No se guardó la información.");
+    alert("Error de red al intentar guardar la historia clínica.");
   } finally {
     if (btn) setLoading(btn, false, "Guardar Historia Clínica");
   }
@@ -399,25 +389,6 @@ function viewPatientDetail(id) {
         <tr><th>Aseguradora</th><td>${sanitize(p.eps)}</td></tr>
       </table>
     </div>
-    <div class="modal-detail-section">
-      <h4>2. Motivo y Antecedentes</h4>
-      <p><strong>Motivo de consulta:</strong><br>${sanitize(p.motivo)}</p>
-      <p><strong>Enfermedad actual:</strong><br>${sanitize(p.enfermedadActual)}</p>
-      <p><strong>Alergias:</strong><br><span style="color:var(--danger); font-weight:bold;">${sanitize(p.alergias || "Ninguna")}</span></p>
-    </div>
-    <div class="modal-detail-section">
-      <h4>3. Examen de Signos Vitales</h4>
-      <div class="vitals-badge-grid">
-        <div class="v-badge"><span>T°:</span><strong>${sanitize(p.temperatura)} °C</strong></div>
-        <div class="v-badge"><span>F.C:</span><strong>${sanitize(p.frecCardiaca)} lpm</strong></div>
-        <div class="v-badge"><span>F.R:</span><strong>${sanitize(p.frecResp)} rpm</strong></div>
-        <div class="v-badge"><span>P.A:</span><strong>${sanitize(p.presionArterial)}</strong></div>
-        <div class="v-badge"><span>SpO₂:</span><strong>${sanitize(p.spo2)}%</strong></div>
-        <div class="v-badge"><span>Peso:</span><strong>${sanitize(p.peso)} kg</strong></div>
-        <div class="v-badge"><span>Talla:</span><strong>${sanitize(p.talla)} cm</strong></div>
-        <div class="v-badge" style="background:var(--navy); color:#fff;"><span>IMC:</span><strong>${sanitize(p.imc)}</strong></div>
-      </div>
-    </div>
   `;
 
   const modal = document.getElementById("modalHC");
@@ -430,7 +401,7 @@ function closeModal() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🛠️ UTILERÍA ADICIONAL
+// 🛠️ SOPORTE GENERAL
 // ─────────────────────────────────────────────────────────────
 function show(el) { if (el) el.style.display = ""; }
 function hide(el) { if (el) el.style.display = "none"; }
