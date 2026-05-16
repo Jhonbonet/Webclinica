@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
   // Asegúrate de actualizar esta URL si generas un nuevo ID de despliegue
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRM0Ym08ggKcWM2FNg3t50IrZfzIg2H_YpsQRBuF171rZIuNcsqlGlDAlI5g_EQNMbWA/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzYihLfrM1_UZ6oWgl16ICYAEeYuHwIlVbhJDWXnZJuc48sdHlEtLtam4qeRE_159SO3w/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
