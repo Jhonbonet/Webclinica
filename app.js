@@ -1,27 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSIÓN FINAL CORREGIDA)
-   Maneja login, lectura y escritura en Google Sheets
-   vía Google Apps Script Web App (no requiere backend propio)
+   ASENORTE · app.js (VERSIÓN INTEGRAL AJUSTADA)
+   Maneja login, navegación segura y registro de datos
 ═══════════════════════════════════════════════════════════════ */
 
-// ─────────────────────────────────────────────────────────────
-// ⚙️ CONFIGURACIÓN (Actualizada con tu nueva URL del Web App)
-// ─────────────────────────────────────────────────────────────
 const CONFIG = {
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwhx5kaU0e-5zDYQM3D3oOeqcYKpsQIP6eSMrgZjuBikyP69fuMuQck0SqROBwpnLRw4g/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
 
-// ─────────────────────────────────────────────────────────────
-// 🔐 SESIÓN Y VARIABLES GLOBALES
-// ─────────────────────────────────────────────────────────────
 let currentUser = null;
 let allPatients  = [];
 
-// ── Un único DOMContentLoaded ──────────────────────────────
+// ── Inicialización segura al cargar el DOM ──
 window.addEventListener("DOMContentLoaded", () => {
-  // Restaurar sesión si existe
+  // 1. Restaurar sesión si existe de forma segura
   try {
     const saved = sessionStorage.getItem("asenorte_user");
     if (saved) {
@@ -32,22 +25,44 @@ window.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem("asenorte_user");
   }
 
-  // Cálculo automático de IMC
-  document.getElementById("svPeso").addEventListener("input", calcIMC);
-  document.getElementById("svTalla").addEventListener("input", calcIMC);
+  // 2. Eventos para cálculo automático de IMC (Verificación de existencia)
+  const svPeso = document.getElementById("svPeso");
+  const svTalla = document.getElementById("svTalla");
+  if (svPeso) svPeso.addEventListener("input", calcIMC);
+  if (svTalla) svTalla.addEventListener("input", calcIMC);
 
-  // Evento submit del Login
+  // 3. Evento submit del Login
   const loginForm = document.getElementById("loginForm");
   if (loginForm) {
     loginForm.addEventListener("submit", handleLogin);
   }
 
-  // Evento submit del Formulario de Historias Clínicas
+  // 4. Evento submit del Formulario de Historias Clínicas
   const hcForm = document.getElementById("hcForm");
   if (hcForm) {
     hcForm.addEventListener("submit", handleSaveHC);
   }
+
+  // 5. Configurar navegación por pestañas basada en clases del HTML viejo/nuevo
+  setupNavigationAlternative();
 });
+
+// ── Lógica de navegación alternativa según las clases de tu index.html ──
+function setupNavigationAlternative() {
+  const tabs = document.querySelectorAll(".nav-btn, .bottom-nav-btn");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Detectar a qué pestaña apunta según el texto o atributo
+      const text = tab.textContent.toLowerCase();
+      if (text.includes("nueva") || tab.id?.includes("nueva") || tab.getAttribute("data-tab") === "nueva") {
+        switchTab("nueva");
+      } else if (text.includes("buscar") || tab.id?.includes("buscar") || tab.getAttribute("data-tab") === "buscar") {
+        switchTab("buscar");
+      }
+    });
+  });
+}
 
 // ─────────────────────────────────────────────────────────────
 // 🔑 LÓGICA DE AUTENTICACIÓN (LOGIN)
@@ -55,18 +70,18 @@ window.addEventListener("DOMContentLoaded", () => {
 async function handleLogin(e) {
   e.preventDefault();
   
-  const userIn  = document.getElementById("username").value.trim();
-  const passIn  = document.getElementById("password").value.trim();
+  const userIn  = document.getElementById("username")?.value.trim();
+  const passIn  = document.getElementById("password")?.value.trim();
   const btn     = document.getElementById("btnLogin");
   const errEl   = document.getElementById("loginError");
 
-  hide(errEl);
+  if (errEl) hide(errEl);
   if (!userIn || !passIn) {
-    showError(errEl, "Por favor complete todos los campos.");
+    if (errEl) showError(errEl, "Por favor complete todos los campos.");
     return;
   }
 
-  setLoading(btn, true, "Iniciar Sesión");
+  if (btn) setLoading(btn, true, "Iniciar Sesión");
 
   try {
     const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
@@ -80,10 +95,7 @@ async function handleLogin(e) {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`Error de red: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Error de red: ${response.status}`);
     const res = await response.json();
 
     if (res.success) {
@@ -91,13 +103,13 @@ async function handleLogin(e) {
       sessionStorage.setItem("asenorte_user", JSON.stringify(currentUser));
       openDashboard();
     } else {
-      showError(errEl, res.message || "Usuario o contraseña incorrectos.");
+      if (errEl) showError(errEl, res.message || "Usuario o contraseña incorrectos.");
     }
   } catch (error) {
     console.error("Error en login:", error);
-    showError(errEl, "No se pudo conectar con el servidor. Verifique la URL de Apps Script y su conexión.");
+    if (errEl) showError(errEl, "Error de comunicación con el servidor de Google.");
   } finally {
-    setLoading(btn, false, "Iniciar Sesión");
+    if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
 }
 
@@ -106,91 +118,110 @@ function logout() {
   currentUser = null;
   allPatients = [];
   
-  // Limpiar campos de login
-  document.getElementById("username").value = "";
-  document.getElementById("password").value = "";
+  const usernameEl = document.getElementById("username");
+  const passwordEl = document.getElementById("password");
+  if (usernameEl) usernameEl.value = "";
+  if (passwordEl) passwordEl.value = "";
+  
   hide(document.getElementById("loginError"));
-
   hide(document.getElementById("dashboardScreen"));
-  show(document.getElementById("loginScreen"));
+  
+  const loginScreen = document.getElementById("loginScreen");
+  if (loginScreen) loginScreen.classList.add("active");
+  show(loginScreen);
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📊 PANEL PRINCIPAL (DASHBOARD) Y NAVEGACIÓN
+// 📊 PANEL PRINCIPAL (DASHBOARD) NAVEGACIÓN
 // ─────────────────────────────────────────────────────────────
 function openDashboard() {
-  hide(document.getElementById("loginScreen"));
-  show(document.getElementById("dashboardScreen"));
+  const loginScreen = document.getElementById("loginScreen");
+  if (loginScreen) loginScreen.classList.remove("active");
+  hide(loginScreen);
+  
+  const dashboardScreen = document.getElementById("dashboardScreen");
+  if (dashboardScreen) dashboardScreen.classList.add("active");
+  show(dashboardScreen);
 
-  // Actualizar datos de usuario en la interfaz
-  document.getElementById("userLabel").textContent = currentUser.nombre;
-  document.getElementById("userRol").textContent   = currentUser.rol;
-  document.getElementById("avatar").textContent    = getInitials(currentUser.nombre);
+  // Actualizar datos del header si existen
+  const userLabel = document.getElementById("userLabel");
+  const userRol = document.getElementById("userRol");
+  const avatar = document.getElementById("avatar");
 
-  // Mostrar pestañas según rol
-  const tabBtnBuscar = document.getElementById("btn-tab-buscar");
+  if (userLabel) userLabel.textContent = currentUser.nombre;
+  if (userRol) userRol.textContent   = currentUser.rol;
+  if (avatar) avatar.textContent    = getInitials(currentUser.nombre);
+
+  // Filtro de pestañas adaptado al Rol
   if (currentUser.rol === "Estudiante") {
     switchTab("nueva");
-    if (tabBtnBuscar) hide(tabBtnBuscar);
+    // Ocultar botones de buscar si es estudiante
+    document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
+      if (b.textContent.toLowerCase().includes("buscar")) hide(b);
+    });
   } else {
     switchTab("buscar");
-    if (tabBtnBuscar) show(tabBtnBuscar);
     fetchHistorias();
   }
 }
 
 function switchTab(tabId) {
-  // Desactivar botones y paneles
+  // Remover estados activos en botones de navegación generales
   document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
 
-  // Activar seleccionados
-  const btnTop = document.getElementById(`btn-tab-${tabId}`);
-  const btnBot = document.getElementById(`btn-bot-${tabId}`);
-  const panel  = document.getElementById(`tab-${tabId}`);
+  // Activar paneles específicos
+  const panel = document.getElementById(`tab-${tabId}`);
+  if (panel) panel.classList.add("active");
 
-  if (btnTop) btnTop.classList.add("active");
-  if (btnBot) btnBot.classList.add("active");
-  if (panel)  panel.classList.add("active");
+  // Activar botones por coincidencia de texto
+  document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
+    if (b.textContent.toLowerCase().includes(tabId)) {
+      b.classList.add("active");
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📝 GESTIÓN DE HISTORIAS CLÍNICAS
+// 📝 HISTORIAS CLÍNICAS: LECTURA Y ESCRITURA
 // ─────────────────────────────────────────────────────────────
 async function handleSaveHC(e) {
   e.preventDefault();
   const btn = document.getElementById("btnGuardar");
-  setLoading(btn, true, "Guardar Historia Clínica");
+  if (btn) setLoading(btn, true, "Guardar Historia Clínica");
+
+  // Recolección segura de datos estructurados
+  const getVal = (id) => document.getElementById(id)?.value.trim() || "";
 
   const formData = {
     fecha: new Date().toISOString(),
-    registradoPor: currentUser.usuario,
-    nombre: document.getElementById("pNombre").value.trim(),
-    identificacion: document.getElementById("pIdentificacion").value.trim(),
-    fechaNacimiento: document.getElementById("pFechaNac").value,
-    sexo: document.getElementById("pSexo").value,
-    grupoSanguineo: document.getElementById("pSangre").value,
-    direccion: document.getElementById("pDireccion").value.trim(),
-    telefono: document.getElementById("pTelefono").value.trim(),
-    eps: document.getElementById("pEps").value.trim(),
-    motivo: document.getElementById("pMotivo").value.trim(),
-    enfermedadActual: document.getElementById("pEnfermedad").value.trim(),
-    antPersonales: document.getElementById("pAntPers").value.trim(),
-    antFamiliares: document.getElementById("pAntFam").value.trim(),
-    alergias: document.getElementById("pAlergias").value.trim(),
-    temperatura: document.getElementById("svTemp").value,
-    frecCardiaca: document.getElementById("svFc").value,
-    frecResp: document.getElementById("svFr").value,
-    presionArterial: document.getElementById("svPa").value.trim(),
-    spo2: document.getElementById("svSpo2").value,
-    peso: document.getElementById("svPeso").value,
-    talla: document.getElementById("svTalla").value,
-    glucemia: document.getElementById("svGlucemia").value,
-    imc: document.getElementById("svImc").value,
-    examenFisico: document.getElementById("pExamen").value.trim(),
-    diagnostico: document.getElementById("pDiagnostico").value.trim(),
-    plan: document.getElementById("pPlan").value.trim(),
-    observaciones: document.getElementById("pObs").value.trim()
+    registradoPor: currentUser ? currentUser.usuario : "Desconocido",
+    nombre: getVal("pNombre"),
+    identificacion: getVal("pIdentificacion"),
+    fechaNacimiento: getVal("pFechaNac"),
+    sexo: getVal("pSexo"),
+    grupoSanguineo: getVal("pSangre"),
+    direccion: getVal("pDireccion"),
+    telefono: getVal("pTelefono"),
+    eps: getVal("pEps"),
+    motivo: getVal("pMotivo"),
+    enfermedadActual: getVal("pEnfermedad"),
+    antPersonales: getVal("pAntPers"),
+    antFamiliares: getVal("pAntFam"),
+    alergias: getVal("pAlergias"),
+    temperatura: getVal("svTemp"),
+    frecCardiaca: getVal("svFc"),
+    frecResp: getVal("svFr"),
+    presionArterial: getVal("svPa"),
+    spo2: getVal("svSpo2"),
+    peso: getVal("svPeso"),
+    talla: getVal("svTalla"),
+    glucemia: getVal("svGlucemia"),
+    imc: getVal("svImc"),
+    examenFisico: getVal("pExamen"),
+    diagnostico: getVal("pDiagnostico"),
+    plan: getVal("pPlan"),
+    observaciones: getVal("pObs")
   };
 
   try {
@@ -208,20 +239,21 @@ async function handleSaveHC(e) {
     if (res.success) {
       showToast("✅ Historia clínica guardada con éxito.");
       document.getElementById("hcForm").reset();
-      document.getElementById("svImc").value = "";
+      const svImc = document.getElementById("svImc");
+      if (svImc) svImc.value = "";
       
-      if (currentUser.rol !== "Estudiante") {
+      if (currentUser && currentUser.rol !== "Estudiante") {
         fetchHistorias();
         switchTab("buscar");
       }
     } else {
-      alert("Error al guardar: " + res.message);
+      alert("Error en hoja de cálculo: " + res.message);
     }
   } catch (err) {
     console.error(err);
-    alert("Error de conexión al guardar la historia clínica.");
+    alert("Error de conexión al guardar el registro.");
   } finally {
-    setLoading(btn, false, "Guardar Historia Clínica");
+    if (btn) setLoading(btn, false, "Guardar Historia Clínica");
   }
 }
 
@@ -232,9 +264,9 @@ async function fetchHistorias() {
 
   container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem;">
     <div class="spinner" style="margin:0 auto 1rem"></div>
-    <p style="color:var(--text-2)">Cargando historias clínicas...</p>
+    <p style="color:var(--text-2)">Cargando registros clínicos...</p>
   </div>`;
-  hide(emptyState);
+  if (emptyState) hide(emptyState);
 
   try {
     const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=getHistorias`);
@@ -244,24 +276,25 @@ async function fetchHistorias() {
       allPatients = res.historias;
       renderPatients(allPatients);
     } else {
-      container.innerHTML = `<p class="empty-state">Error al cargar datos: ${res.message}</p>`;
+      container.innerHTML = `<p class="empty-state">Error: ${res.message}</p>`;
     }
   } catch (err) {
     console.error(err);
-    container.innerHTML = `<p class="empty-state">Error de conexión al cargar las historias clínicas.</p>`;
+    container.innerHTML = `<p class="empty-state">No se pudo obtener la información de la base de datos.</p>`;
   }
 }
 
 function renderPatients(list) {
   const container = document.getElementById("searchResults");
   const emptyState = document.getElementById("searchEmpty");
+  if (!container) return;
   container.innerHTML = "";
 
   if (list.length === 0) {
-    show(emptyState);
+    if (emptyState) show(emptyState);
     return;
   }
-  hide(emptyState);
+  if (emptyState) hide(emptyState);
 
   list.forEach(p => {
     const card = document.createElement("div");
@@ -270,17 +303,17 @@ function renderPatients(list) {
       <div class="patient-card-header">
         <div>
           <h3>${sanitize(p.nombre)}</h3>
-          <p>ID: ${sanitize(p.identificacion)} · ${sanitize(p.sexo)}</p>
+          <p>CC: ${sanitize(p.identificacion)} · ${sanitize(p.sexo)}</p>
         </div>
-        <span class="badge-eps">${sanitize(p.eps)}</span>
+        <span class="badge-eps">${sanitize(p.eps || "Particular")}</span>
       </div>
       <div class="patient-card-body">
-        <p><strong>Diagnóstico:</strong> ${sanitize(p.diagnostico || "Sin diagnóstico")}</p>
-        <p><strong>Atendido por:</strong> ${sanitize(p.registradoPor)}</p>
+        <p><strong>Dx:</strong> ${sanitize(p.diagnostico || "No definido")}</p>
+        <p><strong>Resp:</strong> ${sanitize(p.registradoPor)}</p>
       </div>
       <div class="patient-card-footer">
         <span>${formatDate(p.fecha)}</span>
-        <button class="btn-view" onclick="viewPatientDetail('${p.identificacion}')">Ver Completa</button>
+        <button class="btn-view" onclick="viewPatientDetail('${p.identificacion}')">Ver Detalle</button>
       </div>
     `;
     container.appendChild(card);
@@ -288,7 +321,10 @@ function renderPatients(list) {
 }
 
 function searchPatients() {
-  const query = document.getElementById("searchInput").value.toLowerCase().trim();
+  const input = document.getElementById("searchInput");
+  if (!input) return;
+  const query = input.value.toLowerCase().trim();
+  
   if (!query) {
     renderPatients(allPatients);
     return;
@@ -296,8 +332,7 @@ function searchPatients() {
   const filtered = allPatients.filter(p => 
     String(p.nombre).toLowerCase().includes(query) ||
     String(p.identificacion).includes(query) ||
-    String(p.diagnostico).toLowerCase().includes(query) ||
-    String(p.eps).toLowerCase().includes(query)
+    String(p.diagnostico).toLowerCase().includes(query)
   );
   renderPatients(filtered);
 }
@@ -307,16 +342,18 @@ function viewPatientDetail(id) {
   if (!p) return;
 
   const body = document.getElementById("modalBody");
+  if (!body) return;
+
   body.innerHTML = `
     <div class="modal-detail-section">
-      <h4>1. Datos Personales</h4>
+      <h4>1. Información del Paciente</h4>
       <table class="detail-table">
-        <tr><th>Nombre</th><td>${sanitize(p.nombre)}</td></tr>
+        <tr><th>Nombre Completo</th><td>${sanitize(p.nombre)}</td></tr>
         <tr><th>Identificación</th><td>${sanitize(p.identificacion)}</td></tr>
-        <tr><th>Fecha Nac.</th><td>${sanitize(p.fechaNacimiento)}</td></tr>
-        <tr><th>Sexo / Grupo Sanguíneo</th><td>${sanitize(p.sexo)} / ${sanitize(p.grupoSanguineo)}</td></tr>
-        <tr><th>Dirección / Teléfono</th><td>${sanitize(p.direccion)} / ${sanitize(p.telefono)}</td></tr>
-        <tr><th>EPS</th><td>${sanitize(p.eps)}</td></tr>
+        <tr><th>Fecha Nacimiento</th><td>${sanitize(p.fechaNacimiento)}</td></tr>
+        <tr><th>Sexo / Grupo Rh</th><td>${sanitize(p.sexo)} / ${sanitize(p.grupoSanguineo)}</td></tr>
+        <tr><th>Residencia / Tel</th><td>${sanitize(p.direccion)} / ${sanitize(p.telefono)}</td></tr>
+        <tr><th>Aseguradora (EPS)</th><td>${sanitize(p.eps)}</td></tr>
       </table>
     </div>
     <div class="modal-detail-section">
@@ -325,61 +362,63 @@ function viewPatientDetail(id) {
       <p><strong>Enfermedad Actual:</strong><br>${sanitize(p.enfermedadActual)}</p>
       <p><strong>Antecedentes Personales:</strong><br>${sanitize(p.antPersonales)}</p>
       <p><strong>Antecedentes Familiares:</strong><br>${sanitize(p.antFamiliares)}</p>
-      <p><strong>Alergias:</strong><br><span style="color:var(--danger); font-weight:500;">${sanitize(p.alergias || "Ninguna")}</span></p>
+      <p><strong>Alergias:</strong><br><span style="color:var(--danger); font-weight:bold;">${sanitize(p.alergias || "Ninguna")}</span></p>
     </div>
     <div class="modal-detail-section">
-      <h4>3. Signos Vitales</h4>
+      <h4>3. Signos Vitales Evaluados</h4>
       <div class="vitals-badge-grid">
-        <div class="v-badge"><span>Temp:</span><strong>${sanitize(p.temperatura)} °C</strong></div>
-        <div class="v-badge"><span>FC:</span><strong>${sanitize(p.frecCardiaca)} lpm</strong></div>
-        <div class="v-badge"><span>FR:</span><strong>${sanitize(p.frecResp)} rpm</strong></div>
+        <div class="v-badge"><span>T°:</span><strong>${sanitize(p.temperatura)} °C</strong></div>
+        <div class="v-badge"><span>F.C:</span><strong>${sanitize(p.frecCardiaca)} lpm</strong></div>
+        <div class="v-badge"><span>F.R:</span><strong>${sanitize(p.frecResp)} rpm</strong></div>
         <div class="v-badge"><span>P.A:</span><strong>${sanitize(p.presionArterial)}</strong></div>
         <div class="v-badge"><span>SpO₂:</span><strong>${sanitize(p.spo2)}%</strong></div>
         <div class="v-badge"><span>Peso:</span><strong>${sanitize(p.peso)} kg</strong></div>
         <div class="v-badge"><span>Talla:</span><strong>${sanitize(p.talla)} cm</strong></div>
-        <div class="v-badge"><span>Glucemia:</span><strong>${sanitize(p.glucemia)} mg/dL</strong></div>
+        <div class="v-badge"><span>HGT:</span><strong>${sanitize(p.glucemia)} mg/dL</strong></div>
         <div class="v-badge" style="background:var(--navy); color:#fff;"><span>IMC:</span><strong>${sanitize(p.imc)}</strong></div>
       </div>
     </div>
     <div class="modal-detail-section">
-      <h4>4. Evaluación y Conducta</h4>
+      <h4>4. Impresión Diagnóstica y Plan</h4>
       <p><strong>Examen Físico:</strong><br>${sanitize(p.examenFisico)}</p>
       <p><strong>Diagnóstico:</strong><br><strong>${sanitize(p.diagnostico)}</strong></p>
-      <p><strong>Plan de Manejo:</strong><br>${sanitize(p.plan)}</p>
-      <p><strong>Observaciones:</strong><br>${sanitize(p.observaciones || "Ninguna")}</p>
+      <p><strong>Plan Terapéutico:</strong><br>${sanitize(p.plan)}</p>
+      <p><strong>Observaciones:</strong><br>${sanitize(p.observaciones || "Sin observación adicional")}</p>
     </div>
-    <p style="font-size:0.75rem; color:var(--text-3); margin-top:1.5rem; text-align:right;">
-      Registrado el: ${formatDate(p.fecha)} por ${sanitize(p.registradoPor)}
-    </p>
   `;
 
-  show(document.getElementById("modalHC"));
+  const modal = document.getElementById("modalHC");
+  if (modal) show(modal);
 }
 
 function closeModal() {
-  hide(document.getElementById("modalHC"));
+  const modal = document.getElementById("modalHC");
+  if (modal) hide(modal);
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🛠️ UTILIDADES
+// 🛠️ COMPONENTES AUXILIARES
 // ─────────────────────────────────────────────────────────────
 function show(el) { if (el) el.style.display = ""; }
 function hide(el) { if (el) el.style.display = "none"; }
 
 function showError(el, msg) {
+  if (!el) return;
   el.textContent = msg;
   show(el);
 }
 
 function setLoading(btn, loading, html) {
+  if (!btn) return;
   btn.disabled  = loading;
   btn.innerHTML = loading
-    ? `<div class="spinner" style="width:18px;height:18px;border-width:2px"></div><span>Cargando…</span>`
+    ? `<div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0 auto;"></div>`
     : html;
 }
 
 function showToast(msg, duration = 3000) {
   const toast = document.getElementById("toast");
+  if (!toast) { alert(msg); return; }
   toast.textContent = msg;
   show(toast);
   clearTimeout(toast._t);
@@ -392,9 +431,8 @@ function sanitize(str) {
   return div.innerHTML;
 }
 
-// Obtener iniciales para el Avatar
 function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "?";
+  return name.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "E";
 }
 
 function formatDate(iso) {
@@ -404,17 +442,14 @@ function formatDate(iso) {
   } catch { return String(iso); }
 }
 
-// Cálculo del IMC automático
 function calcIMC() {
-  const peso = parseFloat(document.getElementById("svPeso").value);
-  const tallaCm = parseFloat(document.getElementById("svTalla").value);
+  const peso = parseFloat(document.getElementById("svPeso")?.value);
+  const tallaCm = parseFloat(document.getElementById("svTalla")?.value);
   const imcInput = document.getElementById("svImc");
 
-  if (peso > 0 && tallaCm > 0) {
+  if (imcInput && peso > 0 && tallaCm > 0) {
     const tallaM = tallaCm / 100;
     const imc = peso / (tallaM * tallaM);
     imcInput.value = imc.toFixed(1);
-  } else {
-    imcInput.value = "";
   }
 }
