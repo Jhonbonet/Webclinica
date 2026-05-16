@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
   // URL del Web App de Google Apps Script.
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw92AhlkfyGqCnAW22snLRqCl9irW-HHzneTKi8FiytD1YfixqNY4OWAiEs4OQrift1zA/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzySAJls5GOqPUbcQzu363ynrrcUXVkwCDETo8bygzVJ3hTizTCJk5Z5thK-cjEGVXK/exec",
 
   // Nombre de la hoja de usuarios dentro del Spreadsheet
   SHEET_USUARIOS:  "Usuarios",
