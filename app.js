@@ -8,13 +8,9 @@
 // ⚙️  CONFIGURACIÓN
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
-  // URL del Web App de Google Apps Script.
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzySAJls5GOqPUbcQzu363ynrrcUXVkwCDETo8bygzVJ3hTizTCJk5Z5thK-cjEGVXK/exec",
-
-  // Nombre de la hoja de usuarios dentro del Spreadsheet
+  // Reemplaza esta URL únicamente si cambiaste de proyecto en Apps Script
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw92AhlkfyGqCnAW22snLRqCl9irW-HHzneTKi8FiytD1YfixqNY4OWAiEs4OQrift1zA/exec",
   SHEET_USUARIOS:  "Usuarios",
-
-  // Nombre de la hoja de historias clínicas
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
 
@@ -22,23 +18,20 @@ const CONFIG = {
 // 🔐  SESIÓN
 // ─────────────────────────────────────────────────────────────
 let currentUser = null;
-let allPatients  = [];  // caché local de historias
+let allPatients  = [];
 
-/** Verifica si existe sesión guardada al cargar la página */
 window.addEventListener("DOMContentLoaded", () => {
   const saved = sessionStorage.getItem("asenorte_user");
   if (saved) {
     currentUser = JSON.parse(saved);
     openDashboard();
   }
-
-  // Cálculo automático de IMC cuando cambian peso/talla
   document.getElementById("svPeso").addEventListener("input", calcIMC);
   document.getElementById("svTalla").addEventListener("input", calcIMC);
 });
 
 // ─────────────────────────────────────────────────────────────
-// 🔑  LOGIN
+// 🔑  LOGIN (CONEXIÓN ROBUSTA CORREGIDA)
 // ─────────────────────────────────────────────────────────────
 async function handleLogin() {
   const usuario  = document.getElementById("loginUser").value.trim();
@@ -57,13 +50,22 @@ async function handleLogin() {
 
   try {
     const params = new URLSearchParams({
-      action:   "login",
-      usuario,
-      password,
+      action: "login",
+      usuario: usuario,
+      password: password
     });
 
-    // Se añade el modo 'cors' explícitamente para alinearse con la respuesta de Google
-    const res  = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "cors" });
+    // Modificación Crítica: 'redirect: "follow"' procesa los servidores internos de Google correctamente
+    const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow"
+    });
+
+    if (!res.ok) {
+      throw new Error("Respuesta de servidor inválida");
+    }
+
     const data = await res.json();
 
     if (data.success) {
@@ -71,11 +73,11 @@ async function handleLogin() {
       sessionStorage.setItem("asenorte_user", JSON.stringify(currentUser));
       openDashboard();
     } else {
-      showError(errorEl, data.message || "Credenciales incorrectas.");
+      showError(errorEl, data.message || "Usuario o contraseña incorrectos.");
     }
   } catch (err) {
     console.error(err);
-    showError(errorEl, "No se pudo conectar al servidor. Verifica la URL del Apps Script o vuelve a publicar el script.");
+    showError(errorEl, "Error de red o CORS detectado. Asegúrate de actualizar el despliegue en Google Apps Script a una 'Nueva versión'.");
   } finally {
     setLoading(btn, false, `<span>Iniciar sesión</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -90,7 +92,6 @@ function handleLogout() {
   showScreen("loginScreen");
 }
 
-// Permite presionar Enter en el campo de contraseña
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("loginPass").addEventListener("keydown", (e) => {
     if (e.key === "Enter") handleLogin();
@@ -111,19 +112,15 @@ function openDashboard() {
   loadPatients();
 }
 
-// Declarada de forma global para que el HTML pueda acceder a ella sin problemas
 window.showTab = function(tabId) {
-  // Paneles
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.getElementById(tabId).classList.add("active");
 
-  // Nav desktop
   document.querySelectorAll(".nav-btn").forEach((btn, i) => {
     const tabs = ["tab-pacientes", "tab-historia", "tab-buscar"];
     btn.classList.toggle("active", tabs[i] === tabId);
   });
 
-  // Nav mobile
   document.querySelectorAll(".bnav-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.tab === tabId);
   });
@@ -143,7 +140,11 @@ async function loadPatients() {
 
   try {
     const params = new URLSearchParams({ action: "getHistorias" });
-    const res    = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params}`, { method: "GET", mode: "cors" });
+    const res    = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow"
+    });
     const data   = await res.json();
 
     loader.classList.add("hidden");
@@ -164,7 +165,6 @@ async function loadPatients() {
   }
 }
 
-/** Renderiza tarjetas de pacientes */
 function renderPatientCards(patients, container) {
   container.innerHTML = "";
   patients.forEach(p => {
@@ -201,7 +201,6 @@ async function savePatient() {
   errorEl.classList.add("hidden");
   successEl.classList.add("hidden");
 
-  // Validar campos obligatorios
   const nombre         = document.getElementById("hcNombre").value.trim();
   const identificacion = document.getElementById("hcId").value.trim();
   const motivo         = document.getElementById("hcMotivo").value.trim();
@@ -212,11 +211,9 @@ async function savePatient() {
   }
 
   const payload = buildPayload(nombre, identificacion, motivo);
-
   setLoading(btn, true, "Guardando…");
 
   try {
-    // Las peticiones POST hacia Apps Script requieren redireccionamiento automático por parte del navegador
     const res  = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors", 
@@ -224,12 +221,10 @@ async function savePatient() {
       body:    JSON.stringify(payload),
     });
 
-    // Con mode: 'no-cors', la respuesta viene opaca, asumimos éxito si la petición no falló por red
-    successEl.textContent = "✅ Petición enviada. Revisa tu Google Sheets para verificar el registro.";
+    successEl.textContent = "✅ Petición de guardado enviada. Los datos se procesarán en tu hoja.";
     successEl.classList.remove("hidden");
     showToast("Historia clínica enviada ✅");
     clearForm();
-    // Recargar lista después de un breve delay
     setTimeout(() => loadPatients(), 1500);
 
   } catch (err) {
@@ -244,7 +239,6 @@ async function savePatient() {
   }
 }
 
-/** Construye el objeto de datos para enviar */
 function buildPayload(nombre, identificacion, motivo) {
   return {
     action:          "saveHistoria",
@@ -263,7 +257,6 @@ function buildPayload(nombre, identificacion, motivo) {
     antPersonales:      document.getElementById("hcAntPersonales").value.trim(),
     antFamiliares:      document.getElementById("hcAntFamiliares").value.trim(),
     alergias:           document.getElementById("hcAlergias").value.trim(),
-    // Signos vitales
     temperatura:  document.getElementById("svTemp").value,
     frecCardiaca: document.getElementById("svFC").value,
     frecResp:     document.getElementById("svFR").value,
@@ -273,7 +266,6 @@ function buildPayload(nombre, identificacion, motivo) {
     talla:        document.getElementById("svTalla").value,
     glucemia:     document.getElementById("svGlucemia").value,
     imc:          document.getElementById("imcVal").textContent,
-    // Examen / diagnóstico
     examenFisico: document.getElementById("hcExamenFisico").value.trim(),
     diagnostico:  document.getElementById("hcDiagnostico").value.trim(),
     plan:         document.getElementById("hcPlan").value.trim(),
@@ -314,13 +306,11 @@ function searchPatients() {
 function openPatientModal(p) {
   const modal   = document.getElementById("hcModal");
   const content = document.getElementById("modalContent");
-
   const age = calcAge(p.fechaNacimiento);
 
   content.innerHTML = `
     <h2 class="modal-title">${sanitize(p.nombre)}</h2>
     <p class="modal-id">ID: ${sanitize(p.identificacion)} &bull; Registrado por: ${sanitize(p.registradoPor || "—")} &bull; ${formatDate(p.fecha)}</p>
-
     <div class="modal-section">
       <h4>Datos personales</h4>
       <div class="modal-grid">
@@ -333,7 +323,6 @@ function openPatientModal(p) {
         <div class="modal-field"><span>Alergias</span>${sanitize(p.alergias || "Ninguna conocida")}</div>
       </div>
     </div>
-
     <div class="modal-section">
       <h4>Signos vitales</h4>
       <div>
@@ -348,37 +337,15 @@ function openPatientModal(p) {
         ${vitalChip("📊", "IMC",  p.imc, "")}
       </div>
     </div>
-
     <div class="modal-section">
       <h4>Motivo de consulta</h4>
       <p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.motivo || "—")}</p>
     </div>
-
-    ${p.enfermedadActual ? `
-    <div class="modal-section">
-      <h4>Enfermedad actual</h4>
-      <p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.enfermedadActual)}</p>
-    </div>` : ""}
-
-    ${p.diagnostico ? `
-    <div class="modal-section">
-      <h4>Diagnóstico</h4>
-      <p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.diagnostico)}</p>
-    </div>` : ""}
-
-    ${p.plan ? `
-    <div class="modal-section">
-      <h4>Plan / Intervenciones</h4>
-      <p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.plan)}</p>
-    </div>` : ""}
-
-    ${p.observaciones ? `
-    <div class="modal-section">
-      <h4>Observaciones del estudiante</h4>
-      <p style="font-size:.9rem;line-height:1.6;color:var(--text);font-style:italic">${sanitize(p.observaciones)}</p>
-    </div>` : ""}
+    ${p.enfermedadActual ? `<div class="modal-section"><h4>Enfermedad actual</h4><p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.enfermedadActual)}</p></div>` : ""}
+    ${p.diagnostico ? `<div class="modal-section"><h4>Diagnóstico</h4><p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.diagnostico)}</p></div>` : ""}
+    ${p.plan ? `<div class="modal-section"><h4>Plan / Intervenciones</h4><p style="font-size:.9rem;line-height:1.6;color:var(--text)">${sanitize(p.plan)}</p></div>` : ""}
+    ${p.observaciones ? `<div class="modal-section"><h4>Observaciones del estudiante</h4><p style="font-size:.9rem;line-height:1.6;color:var(--text);font-style:italic">${sanitize(p.observaciones)}</p></div>` : ""}
   `;
-
   modal.classList.remove("hidden");
 }
 
@@ -395,7 +362,7 @@ function closeModalBtn() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ⚕️  IMC
+// ⚕️  IMC Y UTILIDADES
 // ─────────────────────────────────────────────────────────────
 function calcIMC() {
   const peso  = parseFloat(document.getElementById("svPeso").value);
@@ -424,9 +391,6 @@ function calcIMC() {
   catEl.className   = `imc-cat ${css}`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🧹  LIMPIAR FORMULARIO
-// ─────────────────────────────────────────────────────────────
 function clearForm() {
   const ids = [
     "hcNombre","hcId","hcFechaNac","hcSexo","hcGrupoSanguineo",
@@ -446,17 +410,11 @@ function clearForm() {
   document.getElementById("formSuccess").classList.add("hidden");
 }
 
-// ─────────────────────────────────────────────────────────────
-// 👁️  TOGGLE CONTRASEÑA
-// ─────────────────────────────────────────────────────────────
 function togglePass() {
   const input = document.getElementById("loginPass");
   input.type  = input.type === "password" ? "text" : "password";
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🛠️  UTILIDADES
-// ─────────────────────────────────────────────────────────────
 function showError(el, msg) {
   el.textContent = msg;
   el.classList.remove("hidden");
