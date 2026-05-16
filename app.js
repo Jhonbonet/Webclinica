@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSIÓN TOTALMENTE CORREGIDA Y SEGURA)
-   Maneja login, navegación y registros médicos sin bloquear la interfaz
+   ASENORTE · app.js (VERSIÓN INTEGRAL ROBUSTA - CONTROL DE VISIBILIDAD)
+   Maneja login, navegación por pestañas y almacenamiento clínico.
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
@@ -12,10 +12,23 @@ const CONFIG = {
 let currentUser = null;
 let allPatients  = [];
 
-// ── Inicialización Segura del Sistema ──
+// ── Inicialización Prioritaria del DOM ──
 window.addEventListener("DOMContentLoaded", () => {
   
-  // 1. Intentar restaurar sesión guardada
+  // 1. FORZAR VISIBILIDAD INICIAL: Mostrar Login y asegurar que el Dashboard esté oculto
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboardScreen = document.getElementById("dashboardScreen");
+  
+  if (loginScreen) {
+    loginScreen.style.display = "flex"; 
+    loginScreen.classList.add("active");
+  }
+  if (dashboardScreen) {
+    dashboardScreen.style.display = "none";
+    dashboardScreen.classList.remove("active");
+  }
+
+  // 2. Recuperar sesión previa de manera segura
   try {
     const saved = sessionStorage.getItem("asenorte_user");
     if (saved) {
@@ -26,29 +39,29 @@ window.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem("asenorte_user");
   }
 
-  // 2. Control de eventos para el Login de forma segura
+  // 3. Asignación aislada del Formulario de Login
   const loginForm = document.getElementById("loginForm");
   if (loginForm) {
     loginForm.addEventListener("submit", handleLogin);
   }
 
-  // 3. Control de eventos para guardar Historias Clínicas
+  // 4. Asignación aislada del Formulario de Historias Clínicas
   const hcForm = document.getElementById("hcForm");
   if (hcForm) {
     hcForm.addEventListener("submit", handleSaveHC);
   }
 
-  // 4. Cálculo automático de IMC con verificación de existencia
+  // 5. Monitoreo de Signos Vitales para IMC (Seguro ante ausencias)
   const svPeso = document.getElementById("svPeso");
   const svTalla = document.getElementById("svTalla");
   if (svPeso) svPeso.addEventListener("input", calcIMC);
   if (svTalla) svTalla.addEventListener("input", calcIMC);
 
-  // 5. Asignar navegación a los botones de pestañas del index.html por su texto
+  // 6. Vinculación de pestañas de navegación dinámicas
   setupNavigationByText();
 });
 
-// ── Solución a la navegación sin IDs en el HTML ──
+// ── Navegación adaptada a las clases nativas de tu HTML ──
 function setupNavigationByText() {
   const navButtons = document.querySelectorAll(".nav-btn, .bottom-nav-btn");
   navButtons.forEach(btn => {
@@ -65,7 +78,7 @@ function setupNavigationByText() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔑 GESTIÓN DE INICIO DE SESIÓN (LOGIN)
+// 🔑 CONTROL DE ACCESO (LOGIN)
 // ─────────────────────────────────────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
@@ -78,7 +91,7 @@ async function handleLogin(e) {
   if (errEl) hide(errEl);
   
   if (!userIn || !passIn) {
-    if (errEl) showError(errEl, "Por favor, complete todos los campos.");
+    if (errEl) showError(errEl, "Por favor, ingrese usuario y contraseña.");
     return;
   }
 
@@ -96,7 +109,7 @@ async function handleLogin(e) {
       })
     });
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`Error de red HTTP: ${response.status}`);
     const res = await response.json();
 
     if (res.success) {
@@ -108,7 +121,7 @@ async function handleLogin(e) {
     }
   } catch (error) {
     console.error("Error en login:", error);
-    if (errEl) showError(errEl, "Error de conexión con el servidor. Intente de nuevo.");
+    if (errEl) showError(errEl, "No se pudo validar la autenticación. Intente nuevamente.");
   } finally {
     if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
@@ -125,32 +138,37 @@ function logout() {
   if (pInput) pInput.value = "";
 
   hide(document.getElementById("loginError"));
-  hide(document.getElementById("dashboardScreen"));
+  
+  const dashboardScreen = document.getElementById("dashboardScreen");
+  if (dashboardScreen) {
+    dashboardScreen.style.display = "none";
+    dashboardScreen.classList.remove("active");
+  }
   
   const loginScreen = document.getElementById("loginScreen");
   if (loginScreen) {
+    loginScreen.style.display = "flex";
     loginScreen.classList.add("active");
-    show(loginScreen);
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📊 CONTROL DEL PANEL (DASHBOARD)
+// 📊 PANEL DE CONTROL (DASHBOARD)
 // ─────────────────────────────────────────────────────────────
 function openDashboard() {
   const loginScreen = document.getElementById("loginScreen");
   if (loginScreen) {
+    loginScreen.style.display = "none";
     loginScreen.classList.remove("active");
-    hide(loginScreen);
   }
   
   const dashboardScreen = document.getElementById("dashboardScreen");
   if (dashboardScreen) {
+    dashboardScreen.style.display = "block";
     dashboardScreen.classList.add("active");
-    show(dashboardScreen);
   }
 
-  // Cargar datos informativos del usuario en la interfaz
+  // Mapear elementos del encabezado médico
   const userLabel = document.getElementById("userLabel");
   const userRol = document.getElementById("userRol");
   const avatar = document.getElementById("avatar");
@@ -159,10 +177,9 @@ function openDashboard() {
   if (userRol) userRol.textContent   = currentUser.rol;
   if (avatar) avatar.textContent    = getInitials(currentUser.nombre);
 
-  // Configuración de visualización según el rol
+  // Discriminación de pestañas según el nivel de Rol institucional
   if (currentUser.rol === "Estudiante") {
     switchTab("nueva");
-    // Ocultar botones de búsqueda para estudiantes
     document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
       if (b.textContent.toLowerCase().includes("buscar")) hide(b);
     });
@@ -173,15 +190,12 @@ function openDashboard() {
 }
 
 function switchTab(tabId) {
-  // Remover estados activos visuales
   document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
 
-  // Activar el panel correspondiente
   const panel = document.getElementById(`tab-${tabId}`);
   if (panel) panel.classList.add("active");
 
-  // Activar los botones correspondientes mediante coincidencia de texto
   document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
     if (b.textContent.toLowerCase().includes(tabId)) {
       b.classList.add("active");
@@ -190,7 +204,7 @@ function switchTab(tabId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 📝 ENVIAR Y TRAER DATOS (GOOGLE SHEETS)
+// 📝 INTERCAMBIO DE DATOS (GOOGLE SHEETS)
 // ─────────────────────────────────────────────────────────────
 async function handleSaveHC(e) {
   e.preventDefault();
@@ -201,7 +215,7 @@ async function handleSaveHC(e) {
 
   const formData = {
     fecha: new Date().toISOString(),
-    registradoPor: currentUser ? currentUser.usuario : "Sistema",
+    registradoPor: currentUser ? currentUser.usuario : "Docente",
     nombre: getV("pNombre"),
     identificacion: getV("pIdentificacion"),
     fechaNacimiento: getV("pFechaNac"),
@@ -243,7 +257,7 @@ async function handleSaveHC(e) {
 
     const res = await response.json();
     if (res.success) {
-      showToast("✅ Registro clínico guardado.");
+      showToast("✅ Historia clínica consolidada con éxito.");
       document.getElementById("hcForm").reset();
       const imcInput = document.getElementById("svImc");
       if (imcInput) imcInput.value = "";
@@ -253,11 +267,11 @@ async function handleSaveHC(e) {
         switchTab("buscar");
       }
     } else {
-      alert("Error: " + res.message);
+      alert("Error reportado por el servidor: " + res.message);
     }
   } catch (err) {
     console.error(err);
-    alert("Error de conexión al guardar los datos.");
+    alert("Falla de red. No se guardó el registro.");
   } finally {
     if (btn) setLoading(btn, false, "Guardar Historia Clínica");
   }
@@ -271,7 +285,7 @@ async function fetchHistorias() {
   container.innerHTML = `
     <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
       <div class="spinner" style="margin: 0 auto 1rem;"></div>
-      <p style="color: var(--text-2);">Buscando expedientes...</p>
+      <p style="color: var(--text-2);">Sincronizando expedientes clínicos...</p>
     </div>`;
     
   if (emptyState) hide(emptyState);
@@ -284,11 +298,11 @@ async function fetchHistorias() {
       allPatients = res.historias;
       renderPatients(allPatients);
     } else {
-      container.innerHTML = `<p class="empty-state">No se pudieron descargar los datos.</p>`;
+      container.innerHTML = `<p class="empty-state">Error: No se pudieron mapear las historias.</p>`;
     }
   } catch (err) {
     console.error(err);
-    container.innerHTML = `<p class="empty-state">Error de red al leer la base de datos.</p>`;
+    container.innerHTML = `<p class="empty-state">Error de red al consultar el historial.</p>`;
   }
 }
 
@@ -311,12 +325,12 @@ function renderPatients(list) {
       <div class="patient-card-header">
         <div>
           <h3>${sanitize(p.nombre)}</h3>
-          <p>Doc: ${sanitize(p.identificacion)} · ${sanitize(p.sexo)}</p>
+          <p>Documento: ${sanitize(p.identificacion)} · ${sanitize(p.sexo)}</p>
         </div>
         <span class="badge-eps">${sanitize(p.eps || "Particular")}</span>
       </div>
       <div class="patient-card-body">
-        <p><strong>Dx Principal:</strong> ${sanitize(p.diagnostico || "No registrado")}</p>
+        <p><strong>Dx:</strong> ${sanitize(p.diagnostico || "No definido")}</p>
       </div>
       <div class="patient-card-footer">
         <span>${formatDate(p.fecha)}</span>
@@ -354,40 +368,40 @@ function viewPatientDetail(id) {
 
   body.innerHTML = `
     <div class="modal-detail-section">
-      <h4>1. Datos Generales</h4>
+      <h4>1. Identificación Básica</h4>
       <table class="detail-table">
         <tr><th>Paciente</th><td>${sanitize(p.nombre)}</td></tr>
-        <tr><th>Identificación</th><td>${sanitize(p.identificacion)}</td></tr>
-        <tr><th>Nacimiento</th><td>${sanitize(p.fechaNacimiento)}</td></tr>
+        <tr><th>N° Identificación</th><td>${sanitize(p.identificacion)}</td></tr>
+        <tr><th>Fecha Nacimiento</th><td>${sanitize(p.fechaNacimiento)}</td></tr>
         <tr><th>Sexo / Rh</th><td>${sanitize(p.sexo)} / ${sanitize(p.grupoSanguineo)}</td></tr>
-        <tr><th>Contacto</th><td>${sanitize(p.telefono)} / ${sanitize(p.direccion)}</td></tr>
-        <tr><th>Entidad (EPS)</th><td>${sanitize(p.eps)}</td></tr>
+        <tr><th>Ubicación / Tel</th><td>${sanitize(p.direccion)} / ${sanitize(p.telefono)}</td></tr>
+        <tr><th>Aseguradora</th><td>${sanitize(p.eps)}</td></tr>
       </table>
     </div>
     <div class="modal-detail-section">
-      <h4>2. Reporte Clínico</h4>
-      <p><strong>Motivo:</strong><br>${sanitize(p.motivo)}</p>
-      <p><strong>Enfermedad:</strong><br>${sanitize(p.enfermedadActual)}</p>
+      <h4>2. Motivo y Antecedentes</h4>
+      <p><strong>Motivo de consulta:</strong><br>${sanitize(p.motivo)}</p>
+      <p><strong>Enfermedad actual:</strong><br>${sanitize(p.enfermedadActual)}</p>
       <p><strong>Alergias:</strong><br><span style="color:var(--danger); font-weight:bold;">${sanitize(p.alergias || "Ninguna")}</span></p>
     </div>
     <div class="modal-detail-section">
-      <h4>3. Constantes Vitales</h4>
+      <h4>3. Examen de Signos Vitales</h4>
       <div class="vitals-badge-grid">
         <div class="v-badge"><span>T°:</span><strong>${sanitize(p.temperatura)} °C</strong></div>
-        <div class="v-badge"><span>FC:</span><strong>${sanitize(p.frecCardiaca)} lpm</strong></div>
-        <div class="v-badge"><span>FR:</span><strong>${sanitize(p.frecResp)} rpm</strong></div>
-        <div class="v-badge"><span>PA:</span><strong>${sanitize(p.presionArterial)}</strong></div>
-        <div class="v-badge"><span>SatO₂:</span><strong>${sanitize(p.spo2)}%</strong></div>
+        <div class="v-badge"><span>F.C:</span><strong>${sanitize(p.frecCardiaca)} lpm</strong></div>
+        <div class="v-badge"><span>F.R:</span><strong>${sanitize(p.frecResp)} rpm</strong></div>
+        <div class="v-badge"><span>P.A:</span><strong>${sanitize(p.presionArterial)}</strong></div>
+        <div class="v-badge"><span>SpO₂:</span><strong>${sanitize(p.spo2)}%</strong></div>
         <div class="v-badge"><span>Peso:</span><strong>${sanitize(p.peso)} kg</strong></div>
         <div class="v-badge"><span>Talla:</span><strong>${sanitize(p.talla)} cm</strong></div>
         <div class="v-badge" style="background:var(--navy); color:#fff;"><span>IMC:</span><strong>${sanitize(p.imc)}</strong></div>
       </div>
     </div>
     <div class="modal-detail-section">
-      <h4>4. Diagnóstico y Conducta</h4>
-      <p><strong>Examen:</strong><br>${sanitize(p.examenFisico)}</p>
-      <p><strong>Diagnóstico:</strong><br><strong>${sanitize(p.diagnostico)}</strong></p>
-      <p><strong>Tratamiento/Plan:</strong><br>${sanitize(p.plan)}</p>
+      <h4>4. Impresión Diagnóstica</h4>
+      <p><strong>Examen Físico:</strong><br>${sanitize(p.examenFisico)}</p>
+      <p><strong>Diagnóstico Consolidado:</strong><br><strong>${sanitize(p.diagnostico)}</strong></p>
+      <p><strong>Estrategia / Plan:</strong><br>${sanitize(p.plan)}</p>
     </div>
   `;
 
@@ -401,7 +415,7 @@ function closeModal() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🛠️ FUNCIONES DE UTILIDAD
+// 🛠️ MÓDULOS DE SOPORTE INTEGRALES
 // ─────────────────────────────────────────────────────────────
 function show(el) { if (el) el.style.display = ""; }
 function hide(el) { if (el) el.style.display = "none"; }
