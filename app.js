@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSIÓN INTEGRAL ANTIDESBORDE Y ACCESO FIJO)
+   ASENORTE · app.js (VERSION INTEGRAL SINCRO-FIJA)
+   Maneja la autenticación sin bloqueos y renderizado fluido.
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
@@ -11,29 +12,22 @@ const CONFIG = {
 let currentUser = null;
 let allPatients  = [];
 
-// ── Inicialización Segura y Eventos ──
 window.addEventListener("DOMContentLoaded", () => {
-  
-  // 1. Mostrar Login forzadamente en primer plano
+  // Asegurar visibilidad correcta de pantallas al inicio
   const loginScreen = document.getElementById("loginScreen");
   const dashboardScreen = document.getElementById("dashboardScreen");
   
-  if (loginScreen) {
-    loginScreen.style.display = "flex"; 
-    loginScreen.classList.add("active");
-  }
-  if (dashboardScreen) {
-    dashboardScreen.style.display = "none";
-    dashboardScreen.classList.remove("active");
-  }
+  if (loginScreen) loginScreen.style.setProperty("display", "flex", "important");
+  if (dashboardScreen) dashboardScreen.style.display = "none";
 
-  // 2. Controlador de visibilidad de contraseña (Ojito)
+  // Control dinámico del ojo de contraseña
   const btnTogglePassword = document.getElementById("btnTogglePassword");
   const passwordInput = document.getElementById("password");
   const eyeIcon = document.getElementById("eyeIcon");
 
-  if (btnTogglePassword && passwordInput) {
-    btnTogglePassword.addEventListener("click", () => {
+  if (btnTogglePassword && passwordInput && eyeIcon) {
+    btnTogglePassword.addEventListener("click", (e) => {
+      e.preventDefault();
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
         eyeIcon.innerHTML = `
@@ -50,67 +44,41 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 3. Restaurar sesión automática si existe
+  // Cargar sesión guardada si existe
   try {
     const saved = sessionStorage.getItem("asenorte_user");
     if (saved) {
       currentUser = JSON.parse(saved);
       openDashboard();
     }
-  } catch (e) {
+  } catch (err) {
     sessionStorage.removeItem("asenorte_user");
   }
 
-  // 4. Capturas de Formulario
+  // Enlazar formularios
   document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
-  document.getElementById("hcForm")?.addEventListener("submit", handleSaveHC);
-
-  // 5. Automatización IMC
-  const svPeso = document.getElementById("svPeso");
-  const svTalla = document.getElementById("svTalla");
-  if (svPeso) svPeso.addEventListener("input", calcIMC);
-  if (svTalla) svTalla.addEventListener("input", calcIMC);
-
-  setupNavigationByText();
 });
 
-function setupNavigationByText() {
-  const navButtons = document.querySelectorAll(".nav-btn, .bottom-nav-btn");
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const txt = btn.textContent.toLowerCase();
-      if (txt.includes("nueva")) {
-        switchTab("nueva");
-      } else if (txt.includes("buscar")) {
-        switchTab("buscar");
-      }
-    });
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-// 🔑 CONTROL DE ACCESO EFECTIVO
-// ─────────────────────────────────────────────────────────────
+// ── PROCESAMIENTO DE LOGIN FIJO ──
 async function handleLogin(e) {
   e.preventDefault();
   
-  const userIn  = document.getElementById("username")?.value.trim();
-  const passIn  = document.getElementById("password")?.value.trim();
-  const btn     = document.getElementById("btnLogin");
-  const errEl   = document.getElementById("loginError");
+  const userIn = document.getElementById("username")?.value.trim();
+  const passIn = document.getElementById("password")?.value.trim();
+  const btn    = document.getElementById("btnLogin");
+  const errEl  = document.getElementById("loginError");
 
   if (errEl) hide(errEl);
-  
+
   if (!userIn || !passIn) {
-    if (errEl) showError(errEl, "Por favor, complete todos los campos.");
+    if (errEl) showError(errEl, "Completa todos los campos obligatorios.");
     return;
   }
 
   if (btn) setLoading(btn, true, "Iniciar Sesión");
 
   try {
-    // Envío plano compatible con el motor doPost de Google Apps Script
+    // Envío seguro optimizado para Apps Script sin disparar CORS preflight restrictivo
     const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "cors",
@@ -122,7 +90,7 @@ async function handleLogin(e) {
       })
     });
 
-    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP Código: ${response.status}`);
     const res = await response.json();
 
     if (res.success) {
@@ -130,330 +98,41 @@ async function handleLogin(e) {
       sessionStorage.setItem("asenorte_user", JSON.stringify(currentUser));
       openDashboard();
     } else {
-      if (errEl) showError(errEl, res.message || "Usuario o contraseña inválidos.");
+      if (errEl) showError(errEl, res.message || "Credenciales incorrectas.");
     }
   } catch (error) {
-    console.error("Error Login:", error);
-    if (errEl) showError(errEl, "No se pudo conectar. Verifique internet o republique el Script.");
+    console.error("Detalle Error Acceso:", error);
+    if (errEl) showError(errEl, "Error de red o denegación de acceso desde el servidor.");
   } finally {
     if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
 }
 
+function openDashboard() {
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboardScreen = document.getElementById("dashboardScreen");
+
+  if (loginScreen) { loginScreen.style.display = "none"; loginScreen.classList.remove("active"); }
+  if (dashboardScreen) { dashboardScreen.style.display = "block"; dashboardScreen.classList.add("active"); }
+
+  const userLabel = document.getElementById("userLabel");
+  if (userLabel && currentUser) userLabel.textContent = currentUser.nombre;
+}
+
 function logout() {
   sessionStorage.removeItem("asenorte_user");
   currentUser = null;
-  allPatients = [];
-  
-  const uInput = document.getElementById("username");
-  const pInput = document.getElementById("password");
-  if (uInput) uInput.value = "";
-  if (pInput) pInput.value = "";
-
-  hide(document.getElementById("loginError"));
-  
-  const dashboardScreen = document.getElementById("dashboardScreen");
-  if (dashboardScreen) {
-    dashboardScreen.style.display = "none";
-    dashboardScreen.classList.remove("active");
-  }
-  
-  const loginScreen = document.getElementById("loginScreen");
-  if (loginScreen) {
-    loginScreen.style.display = "flex";
-    loginScreen.classList.add("active");
-  }
+  window.location.reload();
 }
 
-// ─────────────────────────────────────────────────────────────
-// 📊 PANEL CONTROL (DASHBOARD)
-// ─────────────────────────────────────────────────────────────
-function openDashboard() {
-  const loginScreen = document.getElementById("loginScreen");
-  if (loginScreen) {
-    loginScreen.style.display = "none";
-    loginScreen.classList.remove("active");
-  }
-  
-  const dashboardScreen = document.getElementById("dashboardScreen");
-  if (dashboardScreen) {
-    dashboardScreen.style.display = "block";
-    dashboardScreen.classList.add("active");
-  }
-
-  const userLabel = document.getElementById("userLabel");
-  const userRol = document.getElementById("userRol");
-  const avatar = document.getElementById("avatar");
-
-  if (userLabel) userLabel.textContent = currentUser.nombre;
-  if (userRol) userRol.textContent   = currentUser.rol;
-  if (avatar) avatar.textContent    = getInitials(currentUser.nombre);
-
-  if (currentUser.rol === "Estudiante") {
-    switchTab("nueva");
-    document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
-      if (b.textContent.toLowerCase().includes("buscar")) hide(b);
-    });
-  } else {
-    switchTab("buscar");
-    fetchHistorias();
-  }
-}
-
-function switchTab(tabId) {
-  document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-
-  const panel = document.getElementById(`tab-${tabId}`);
-  if (panel) panel.classList.add("active");
-
-  document.querySelectorAll(".nav-btn, .bottom-nav-btn").forEach(b => {
-    if (b.textContent.toLowerCase().includes(tabId)) {
-      b.classList.add("active");
-    }
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
-// 📝 HISTORIAS CLÍNICAS (SHEETS)
-// ─────────────────────────────────────────────────────────────
-async function handleSaveHC(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnGuardar");
-  if (btn) setLoading(btn, true, "Guardar Historia Clínica");
-
-  const getV = (id) => document.getElementById(id)?.value.trim() || "";
-
-  const formData = {
-    fecha: new Date().toISOString(),
-    registradoPor: currentUser ? currentUser.usuario : "Docente",
-    nombre: getV("pNombre"),
-    identificacion: getV("pIdentificacion"),
-    fechaNacimiento: getV("pFechaNac"),
-    sexo: getV("pSexo"),
-    grupoSanguineo: getV("pSangre"),
-    direccion: getV("pDireccion"),
-    telefono: getV("pTelefono"),
-    eps: getV("pEps"),
-    motivo: getV("pMotivo"),
-    enfermedadActual: getV("pEnfermedad"),
-    antPersonales: getV("pAntPers"),
-    antFamiliares: getV("pAntFam"),
-    alergias: getV("pAlergias"),
-    temperatura: getV("svTemp"),
-    frecCardiaca: getV("svFc"),
-    frecResp: getV("svFr"),
-    presionArterial: getV("svPa"),
-    spo2: getV("svSpo2"),
-    peso: getV("svPeso"),
-    talla: getV("svTalla"),
-    glucemia: getV("svGlucemia"),
-    imc: getV("svImc"),
-    examenFisico: getV("pExamen"),
-    diagnostico: getV("pDiagnostico"),
-    plan: getV("pPlan"),
-    observaciones: getV("pObs")
-  };
-
-  try {
-    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        action: "guardarHistoria",
-        body: formData
-      })
-    });
-
-    const res = await response.json();
-    if (res.success) {
-      showToast("✅ Historia clínica consolidada con éxito.");
-      document.getElementById("hcForm").reset();
-      const imcInput = document.getElementById("svImc");
-      if (imcInput) imcInput.value = "";
-      
-      if (currentUser && currentUser.rol !== "Estudiante") {
-        fetchHistorias();
-        switchTab("buscar");
-      }
-    } else {
-      alert("Error: " + res.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Error de red al intentar guardar la historia clínica.");
-  } finally {
-    if (btn) setLoading(btn, false, "Guardar Historia Clínica");
-  }
-}
-
-async function fetchHistorias() {
-  const container = document.getElementById("searchResults");
-  const emptyState = document.getElementById("searchEmpty");
-  if (!container) return;
-
-  container.innerHTML = `
-    <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
-      <div class="spinner" style="margin: 0 auto 1rem;"></div>
-      <p style="color: var(--text-2);">Sincronizando expedientes...</p>
-    </div>`;
-    
-  if (emptyState) hide(emptyState);
-
-  try {
-    const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=getHistorias`);
-    const res = await response.json();
-    
-    if (res.success) {
-      allPatients = res.historias;
-      renderPatients(allPatients);
-    } else {
-      container.innerHTML = `<p class="empty-state">Error al mapear las historias.</p>`;
-    }
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = `<p class="empty-state">Error de red al consultar el historial.</p>`;
-  }
-}
-
-function renderPatients(list) {
-  const container = document.getElementById("searchResults");
-  const emptyState = document.getElementById("searchEmpty");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (list.length === 0) {
-    if (emptyState) show(emptyState);
-    return;
-  }
-  if (emptyState) hide(emptyState);
-
-  list.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "patient-card";
-    card.innerHTML = `
-      <div class="patient-card-header">
-        <div>
-          <h3>${sanitize(p.nombre)}</h3>
-          <p>Documento: ${sanitize(p.identificacion)} · ${sanitize(p.sexo)}</p>
-        </div>
-        <span class="badge-eps">${sanitize(p.eps || "Particular")}</span>
-      </div>
-      <div class="patient-card-body">
-        <p><strong>Dx:</strong> ${sanitize(p.diagnostico || "No definido")}</p>
-      </div>
-      <div class="patient-card-footer">
-        <span>${formatDate(p.fecha)}</span>
-        <button class="btn-view" onclick="viewPatientDetail('${p.identificacion}')">Ver Completa</button>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-function searchPatients() {
-  const input = document.getElementById("searchInput");
-  if (!input) return;
-  const query = input.value.toLowerCase().trim();
-  
-  if (!query) {
-    renderPatients(allPatients);
-    return;
-  }
-  
-  const filtered = allPatients.filter(p => 
-    String(p.nombre).toLowerCase().includes(query) ||
-    String(p.identificacion).includes(query) ||
-    String(p.diagnostico).toLowerCase().includes(query)
-  );
-  renderPatients(filtered);
-}
-
-function viewPatientDetail(id) {
-  const p = allPatients.find(item => item.identificacion == id);
-  if (!p) return;
-
-  const body = document.getElementById("modalBody");
-  if (!body) return;
-
-  body.innerHTML = `
-    <div class="modal-detail-section">
-      <h4>1. Identificación Básica</h4>
-      <table class="detail-table">
-        <tr><th>Paciente</th><td>${sanitize(p.nombre)}</td></tr>
-        <tr><th>N° Identificación</th><td>${sanitize(p.identificacion)}</td></tr>
-        <tr><th>Fecha Nacimiento</th><td>${sanitize(p.fechaNacimiento)}</td></tr>
-        <tr><th>Sexo / Rh</th><td>${sanitize(p.sexo)} / ${sanitize(p.grupoSanguineo)}</td></tr>
-        <tr><th>Ubicación / Tel</th><td>${sanitize(p.direccion)} / ${sanitize(p.telefono)}</td></tr>
-        <tr><th>Aseguradora</th><td>${sanitize(p.eps)}</td></tr>
-      </table>
-    </div>
-  `;
-
-  const modal = document.getElementById("modalHC");
-  if (modal) show(modal);
-}
-
-function closeModal() {
-  const modal = document.getElementById("modalHC");
-  if (modal) hide(modal);
-}
-
-// ─────────────────────────────────────────────────────────────
-// 🛠️ SOPORTE GENERAL
-// ─────────────────────────────────────────────────────────────
 function show(el) { if (el) el.style.display = ""; }
 function hide(el) { if (el) el.style.display = "none"; }
-
-function showError(el, msg) {
-  if (!el) return;
-  el.textContent = msg;
-  show(el);
-}
+function showError(el, msg) { if (el) { el.textContent = msg; show(el); } }
 
 function setLoading(btn, loading, html) {
   if (!btn) return;
   btn.disabled = loading;
-  btn.innerHTML = loading
-    ? `<div class="spinner" style="width:16px; height:16px; border-width:2px; margin:0 auto;"></div>`
-    : html;
-}
-
-function showToast(msg, duration = 3000) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = msg;
-  show(toast);
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => hide(toast), duration);
-}
-
-function sanitize(str) {
-  const div = document.createElement("div");
-  div.textContent = String(str ?? "");
-  return div.innerHTML;
-}
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "U";
-}
-
-function formatDate(iso) {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString("es-CO", { day:"2-digit", month:"short", year:"numeric" });
-  } catch { return String(iso); }
-}
-
-function calcIMC() {
-  const peso = parseFloat(document.getElementById("svPeso")?.value);
-  const tallaCm = parseFloat(document.getElementById("svTalla")?.value);
-  const imcInput = document.getElementById("svImc");
-
-  if (imcInput && peso > 0 && tallaCm > 0) {
-    const tallaM = tallaCm / 100;
-    const imc = peso / (tallaM * tallaM);
-    imcInput.value = imc.toFixed(1);
-  }
+  btn.innerHTML = loading 
+    ? `<div class="spinner"></div> <span style="margin-left:8px;">Cargando...</span>` 
+    : `<span>${html}</span>`;
 }
