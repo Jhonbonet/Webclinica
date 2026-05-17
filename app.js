@@ -16,7 +16,7 @@ const CONFIG = {
    *   3. Ejecutar como: "Yo" | Acceso: "Cualquier persona".
    *   4. Copia la URL generada y pégala aquí.
    */
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxga68L_81eoW59MZVWxhGMdfXvVcyXf07VANzu5mvTLYZz_a3e5oJ8XoDJVebxjKTzkg/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzkscJunY9XT3CSkL86P2TqqUqiBb4iV7Bt7Ne2RZltM63y9mUrztx249eZOmu7Kxr8gw/exec",
 
   // Nombre de la hoja de usuarios dentro del Spreadsheet
   SHEET_USUARIOS:  "Usuarios",
