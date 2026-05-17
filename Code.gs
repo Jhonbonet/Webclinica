@@ -16,7 +16,7 @@
 //   6. Copia la URL generada y pégala en app.js → CONFIG.APPS_SCRIPT_URL
 // ═══════════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = "TU_SPREADSHEET_ID_AQUI";
+var SPREADSHEET_ID = "1U_qRYdAe9HdbeJ1M_JSxtBNmjZwRn7nYcVoaEl29EvY";
 
 // ── Cabeceras de HistoriasClinicas ──────────────────────────
 var HC_HEADERS = [
