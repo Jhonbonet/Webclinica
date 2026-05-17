@@ -1,301 +1,878 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Sistema Hospitalario Autenticado</title>
-    <style>
-        :root {
-            --primary: #0077b6;
-            --primary-hover: #03045e;
-            --background: #f8f9fa;
-            --card-bg: #ffffff;
-            --text: #212529;
-            --border: #dee2e6;
-            --success: #2a9d8f;
-            --danger: #e63946;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--background);
-            color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container { width: 100%; max-width: 1200px; margin: 0 auto; }
-        .login-wrapper { max-width: 400px; width: 100%; margin: 0 auto; }
-        .login-header { text-align: center; margin-bottom: 25px; }
-        .login-header h1 { color: var(--primary); font-size: 1.8rem; }
-        
-        .password-container { position: relative; display: flex; align-items: center; }
-        .password-container input { padding-right: 45px; }
-        .toggle-password { position: absolute; right: 12px; cursor: pointer; font-size: 1.2rem; color: #6c757d; }
-
-        .hidden { display: none !important; }
-
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 15px;
-        }
-
-        .app-header h2 { color: var(--primary); }
-        .user-badge { background-color: #e2e3e5; padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .btn-logout { background-color: var(--danger); padding: 5px 10px; font-size: 0.8rem; width: auto; color: white; border: none; border-radius: 4px; cursor: pointer; }
-
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
-
-        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid var(--border); }
-        h3 { margin-bottom: 20px; font-size: 1.3rem; border-bottom: 2px solid var(--background); padding-bottom: 10px; color: #343a40; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; margin-bottom: 5px; }
-        select, input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; outline: none; }
-        select:disabled, input:disabled { background-color: #e9ecef; color: #495057; }
-        button { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        button:hover { background-color: var(--primary-hover); }
-        .error-msg { color: var(--danger); font-size: 0.9rem; margin-top: 10px; text-align: center; font-weight: bold; }
-        .info-alert { background-color: #e2e3e5; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-style: italic; }
-        
-        .nota-item { background: var(--background); border-left: 4px solid var(--primary); padding: 15px; border-radius: 0 4px 4px 0; margin-bottom: 15px; }
-        .nota-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: #6c757d; margin-bottom: 8px; }
-        .nota-vitals { font-weight: bold; color: var(--success); margin-bottom: 5px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASENORTE · Sistema Clínico v3.0</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-    <!-- ================= VISTA LOGIN ================= -->
-    <div id="vista-login" class="login-wrapper">
-        <div class="card">
-            <div class="login-header">
-                <h1>🩺 Control Clínico</h1>
-                <p>Acceso Seguro de Enfermería</p>
+<!-- ══════════════════════════════ LOGIN ══════════════════════════════ -->
+<section id="loginScreen" class="screen active">
+  <div class="login-bg">
+    <div class="login-blob blob1"></div>
+    <div class="login-blob blob2"></div>
+    <div class="login-blob blob3"></div>
+  </div>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-mark">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4z" fill="var(--accent)"/>
+          <path d="M20 11v18M11 20h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-name">ASENORTE</h1>
+        <p class="brand-sub">Corporación Educativa · v3.0</p>
+      </div>
+    </div>
+    <h2 class="login-title">Bienvenido/<wbr>a</h2>
+    <p class="login-desc">Ingresa tus credenciales para acceder al Sistema de Historias Clínicas.</p>
+    <div class="form-group">
+      <label for="loginUser">Usuario</label>
+      <input type="text" id="loginUser" placeholder="código estudiantil / paciente" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label for="loginPass">Contraseña</label>
+      <div class="input-wrapper">
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" />
+        <button class="toggle-pass" type="button" onclick="togglePass()" aria-label="Ver contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="loginError" class="error-msg" style="display:none;"></div>
+    <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
+      <span>Iniciar sesión</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <p class="login-footer">¿Problemas para ingresar? Contacta al administrador.</p>
+    <div class="roles-info">
+      <span class="rol-chip">👩‍⚕️ Enfermero/Estudiante</span>
+      <span class="rol-chip">🏥 Paciente</span>
+      <span class="rol-chip">👩‍🏫 Docente</span>
+      <span class="rol-chip">🔧 Administrador</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ DASHBOARD ══════════════════════════════ -->
+<section id="dashboardScreen" class="screen">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-mark small">
+        <svg viewBox="0 0 40 40" fill="none"><path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16 16-7.163 16-16S28.837 4 20 4z" fill="var(--accent)"/><path d="M20 11v18M11 20h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
+      <span class="brand-name small">ASENORTE</span>
+      <span id="rolBadge" class="rol-badge"></span>
+    </div>
+    <nav class="topnav" id="topnav"></nav>
+    <div class="topbar-right">
+      <span id="welcomeUser" class="user-badge"></span>
+      <button class="btn-logout" onclick="handleLogout()">Salir</button>
+    </div>
+  </header>
+
+  <nav class="bottom-nav" id="bottomnav"></nav>
+
+  <main class="main-content">
+
+    <!-- ════ TAB: LISTA DE PACIENTES ════ -->
+    <div id="tab-pacientes" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Historias Clínicas</h2>
+        <button class="btn-accent" onclick="loadPatients()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Actualizar
+        </button>
+      </div>
+      <div id="loadingMsg" class="loading-msg" style="display:none;">
+        <div class="spinner"></div><span>Cargando historias clínicas…</span>
+      </div>
+      <div id="patientList" class="patient-grid"></div>
+      <p id="emptyState" class="empty-state" style="display:none;">No hay historias clínicas registradas aún.</p>
+    </div>
+
+    <!-- ════ TAB: NUEVA HISTORIA CLÍNICA ════ -->
+    <div id="tab-historia" class="tab-panel">
+      <div class="panel-header"><h2>Nueva Historia Clínica</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos del Paciente</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre completo *</label><input type="text" id="hcNombre" placeholder="Ej. María García López" /></div>
+            <div class="form-group"><label>N.° de identificación *</label><input type="text" id="hcId" placeholder="Cédula / pasaporte" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Fecha de nacimiento</label><input type="date" id="hcFechaNac" /></div>
+            <div class="form-group"><label>Sexo</label>
+              <select id="hcSexo"><option value="">Seleccionar</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select>
             </div>
-            <form id="form-login">
-                <div class="form-group">
-                    <label for="login-usuario">Usuario:</label>
-                    <input type="text" id="login-usuario" required placeholder="Ej: enfermera_lucia">
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Contraseña:</label>
-                    <div class="password-container">
-                        <input type="password" id="login-password" required placeholder="••••••••">
-                        <span id="btn-toggle-pass" class="toggle-password">👁️</span>
-                    </div>
-                </div>
-                <button type="submit" id="btn-entrar">Iniciar Sesión</button>
-                <div id="login-error" class="error-msg hidden"></div>
-            </form>
+            <div class="form-group"><label>Grupo sanguíneo</label>
+              <select id="hcGrupoSanguineo"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Estado civil</label>
+              <select id="hcEstadoCivil"><option value="">—</option><option>Soltero/a</option><option>Casado/a</option><option>Unión libre</option><option>Divorciado/a</option><option>Viudo/a</option></select>
+            </div>
+            <div class="form-group"><label>Escolaridad</label>
+              <select id="hcEscolaridad"><option value="">—</option><option>Ninguna</option><option>Primaria</option><option>Secundaria</option><option>Técnico</option><option>Universitario</option><option>Posgrado</option></select>
+            </div>
+            <div class="form-group"><label>Ocupación</label><input type="text" id="hcOcupacion" placeholder="Profesión / oficio" /></div>
+          </div>
+          <div class="form-group"><label>Dirección / Procedencia</label><input type="text" id="hcDireccion" placeholder="Ciudad, barrio" /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Teléfono</label><input type="tel" id="hcTelefono" placeholder="+57 300 000 0000" /></div>
+            <div class="form-group"><label>EPS / Aseguradora</label><input type="text" id="hcEps" placeholder="Nombre de la EPS" /></div>
+            <div class="form-group"><label>Régimen</label>
+              <select id="hcRegimen"><option value="">—</option><option>Contributivo</option><option>Subsidiado</option><option>Especial</option><option>Vinculado</option><option>Particular</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Contacto de emergencia</label><input type="text" id="hcContactoEmergencia" placeholder="Nombre y parentesco" /></div>
+            <div class="form-group"><label>Teléfono emergencia</label><input type="tel" id="hcTelefonoEmergencia" placeholder="+57 300 000 0000" /></div>
+          </div>
         </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Motivo de Consulta y Antecedentes</h3></div>
+          <div class="form-group"><label>Motivo principal *</label><textarea id="hcMotivo" rows="3" placeholder="Describe el motivo con palabras del paciente…"></textarea></div>
+          <div class="form-group"><label>Enfermedad actual</label><textarea id="hcEnfermedad" rows="4" placeholder="Descripción cronológica…"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Antecedentes personales</label><textarea id="hcAntPersonales" rows="3" placeholder="Enfermedades previas, cirugías…"></textarea></div>
+            <div class="form-group"><label>Antecedentes familiares</label><textarea id="hcAntFamiliares" rows="3" placeholder="Enfermedades hereditarias…"></textarea></div>
+          </div>
+          <div class="form-group"><label>Alergias conocidas</label><input type="text" id="hcAlergias" placeholder="Medicamentos, alimentos, otros" /></div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">03</span><h3>Signos Vitales</h3></div>
+          <div class="vitals-grid">
+            <div class="vital-item"><label>Temp. (°C)</label><input type="number" id="svTemp" step="0.1" min="34" max="42" placeholder="37.0" /><span class="vital-icon">🌡️</span></div>
+            <div class="vital-item"><label>FC (lpm)</label><input type="number" id="svFC" min="30" max="250" placeholder="80" /><span class="vital-icon">❤️</span></div>
+            <div class="vital-item"><label>FR (rpm)</label><input type="number" id="svFR" min="8" max="40" placeholder="16" /><span class="vital-icon">🫁</span></div>
+            <div class="vital-item"><label>PA (mmHg)</label><input type="text" id="svPA" placeholder="120/80" /><span class="vital-icon">💉</span></div>
+            <div class="vital-item"><label>SpO₂ (%)</label><input type="number" id="svSpo2" min="50" max="100" placeholder="98" /><span class="vital-icon">🩺</span></div>
+            <div class="vital-item"><label>Peso (kg)</label><input type="number" id="svPeso" step="0.1" min="1" max="300" placeholder="65.0" /><span class="vital-icon">⚖️</span></div>
+            <div class="vital-item"><label>Talla (cm)</label><input type="number" id="svTalla" min="30" max="250" placeholder="165" /><span class="vital-icon">📏</span></div>
+            <div class="vital-item"><label>Glucemia (mg/dl)</label><input type="number" id="svGlucemia" min="10" max="600" placeholder="100" /><span class="vital-icon">🩸</span></div>
+          </div>
+          <div class="imc-display" id="imcDisplay">
+            <span>IMC: </span><strong id="imcVal">—</strong>
+            <span id="imcCategoria" class="imc-cat"></span>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">04</span><h3>Examen Físico, Diagnóstico y Plan</h3></div>
+          <div class="form-group"><label>Examen físico</label><textarea id="hcExamenFisico" rows="4" placeholder="Hallazgos por sistemas…"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Diagnóstico presuntivo</label><textarea id="hcDiagnostico" rows="3" placeholder="Descripción diagnóstica…"></textarea></div>
+            <div class="form-group"><label>Código CIE-10</label><input type="text" id="hcCIE10" placeholder="Ej. J06.9" /></div>
+          </div>
+          <div class="form-group"><label>Plan / Intervenciones de enfermería</label><textarea id="hcPlan" rows="3" placeholder="Medicamentos, indicaciones, referencia…"></textarea></div>
+          <div class="form-group"><label>Observaciones del estudiante</label><textarea id="hcObservaciones" rows="2" placeholder="Notas del proceso de práctica…"></textarea></div>
+        </div>
+      </div>
+      <div id="formError" class="error-msg" style="display:none;"></div>
+      <div id="formSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-secondary" onclick="clearForm()">Limpiar</button>
+        <button class="btn-primary" id="saveBtn" data-label='<span>Guardar Historia Clínica</span>' onclick="savePatient()">
+          <span>Guardar Historia Clínica</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        </button>
+      </div>
     </div>
 
-    <!-- ================= VISTA PRINCIPAL ================= -->
-    <div id="vista-app" class="container hidden">
-        <header class="app-header">
-            <div>
-                <h2>🩺 Módulo de Enfermería</h2>
-                <p>Expediente y Notas Médicas en Tiempo Real</p>
+    <!-- ════ TAB: ADMISIÓN + RIPS ════ -->
+    <div id="tab-admision" class="tab-panel">
+      <div class="panel-header"><h2>Registro de Admisión y RIPS</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos del Paciente Admitido</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID del paciente *</label><input type="text" id="admPacienteId" placeholder="Número de identificación" /></div>
+            <div class="form-group"><label>Nombre completo</label><input type="text" id="admPacienteNombre" placeholder="Nombre del paciente" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>EPS / Aseguradora</label><input type="text" id="admEps" placeholder="EPS del paciente" /></div>
+            <div class="form-group"><label>Régimen</label>
+              <select id="admRegimen"><option value="">—</option><option>Contributivo</option><option>Subsidiado</option><option>Especial</option><option>Particular</option></select>
             </div>
-            <div class="user-badge">
-                <span>👤 <span id="sesion-nombre">Nombre</span> (<span id="sesion-rol">Rol</span>)</span>
-                <button class="btn-logout" id="btn-salir">Salir</button>
+            <div class="form-group"><label>N.° Afiliación</label><input type="text" id="admNumeroAfiliacion" placeholder="N.° de afiliado" /></div>
+          </div>
+          <div class="form-group">
+            <label class="check-label">
+              <input type="checkbox" id="admDerechos" />
+              <span>✅ Derechos contractuales verificados</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Servicio y Tipo de Admisión</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>Tipo de admisión</label>
+              <select id="admTipo"><option value="">—</option><option>Urgencias</option><option>Hospitalización</option><option>Consulta externa</option><option>Cirugía</option><option>Procedimiento</option></select>
             </div>
-        </header>
-
-        <main class="grid-layout">
-            <!-- Formulario de Notas -->
-            <section class="card form-section">
-                <h3>📝 Registrar Evolución</h3>
-                <form id="form-nota">
-                    <div class="form-group">
-                        <label for="input-enfermera-firma">Firmado Por (Auto):</label>
-                        <input type="text" id="input-enfermera-firma" disabled value="Cargando perfil...">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="select-paciente">Paciente Seleccionado:</label>
-                        <select id="select-paciente" required>
-                            <option value="">Seleccione un paciente...</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="signos-vitales">Signos Vitales:</label>
-                        <input type="text" id="signos-vitales" placeholder="Ej: PA: 110/70, Temp: 36.2°C" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="observaciones">Observaciones Clínicas:</label>
-                        <textarea id="observaciones" rows="4" placeholder="Escriba aquí los detalles detectados en el turno..." required></textarea>
-                    </div>
-
-                    <button type="submit" id="btn-guardar">Guardar Nota Médica</button>
-                </form>
-            </section>
-
-            <!-- Historial Compartido -->
-            <section class="card history-section">
-                <h3>📋 Línea de Tiempo del Paciente</h3>
-                <div id="info-paciente-seleccionado" class="info-alert">
-                    Seleccione un paciente para auditar el historial de notas compartidas.
-                </div>
-                <div class="timeline" id="contenedor-notas"></div>
-            </section>
-        </main>
+            <div class="form-group"><label>Servicio destino</label>
+              <select id="admServicio"><option value="">—</option><option>Medicina interna</option><option>Pediatría</option><option>Ginecología</option><option>Cirugía</option><option>UCI</option><option>Urgencias</option><option>Consulta externa</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Médico responsable</label><input type="text" id="admMedico" placeholder="Nombre del médico" /></div>
+            <div class="form-group"><label>Prioridad / Triage</label>
+              <select id="admPrioridad">
+                <option value="">—</option>
+                <option value="I — Resucitación">I — Resucitación (inmediata)</option>
+                <option value="II — Emergencia">II — Emergencia (≤15 min)</option>
+                <option value="III — Urgencia">III — Urgencia (≤30 min)</option>
+                <option value="IV — Menos urgente">IV — Menos urgente (≤60 min)</option>
+                <option value="V — No urgente">V — No urgente (≤120 min)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Motivo de admisión</label><textarea id="admMotivo" rows="2" placeholder="Motivo del ingreso…"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Condición de ingreso</label>
+              <select id="admCondicion"><option value="">—</option><option>Estable</option><option>Delicado</option><option>Grave</option><option>Crítico</option></select>
+            </div>
+            <div class="form-group"><label>Origen de atención</label>
+              <select id="admOrigen"><option value="">—</option><option>Espontáneo</option><option>Remitido</option><option>EPS</option><option>Particular</option><option>Accidente de trabajo</option><option>Accidente de tránsito</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">03</span><h3>Generación de RIPS</h3></div>
+          <div class="rips-panel">
+            <div class="rips-icon">📋</div>
+            <p>Al guardar se generará el código RIPS automáticamente según los datos de admisión.</p>
+            <div class="form-group"><label>Observaciones de admisión</label><textarea id="admObservaciones" rows="3" placeholder="Notas adicionales…"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div id="admError" class="error-msg" style="display:none;"></div>
+      <div id="admSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="admBtn" data-label="<span>Registrar Admisión</span>" onclick="saveAdmision()">
+          <span>Registrar Admisión</span>
+        </button>
+      </div>
     </div>
 
-    <script>
-        let usuarioLogueado = null;
+    <!-- ════ TAB: KÁRDEX ════ -->
+    <div id="tab-kardex" class="tab-panel">
+      <div class="panel-header"><h2>Kárdex — Control de Medicamentos</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Prescripción y Administración</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="kPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="kPacienteNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Medicamento *</label><input type="text" id="kMedicamento" placeholder="Nombre genérico / comercial" /></div>
+            <div class="form-group"><label>Concentración</label><input type="text" id="kConcentracion" placeholder="500 mg, 10 mg/mL…" /></div>
+            <div class="form-group"><label>Forma farmacéutica</label>
+              <select id="kForma"><option value="">—</option><option>Tableta</option><option>Cápsula</option><option>Solución</option><option>Suspensión</option><option>Ampolla</option><option>Parche</option><option>Óvulo</option><option>Supositorio</option><option>Crema</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Dosis *</label><input type="text" id="kDosis" placeholder="1 tableta, 5 mL…" /></div>
+            <div class="form-group"><label>Vía de administración</label>
+              <select id="kVia"><option value="">—</option><option>Oral</option><option>IV</option><option>IM</option><option>SC</option><option>Tópica</option><option>Sublingual</option><option>Rectal</option><option>Inhalatoria</option><option>Oftálmica</option><option>Ótica</option></select>
+            </div>
+            <div class="form-group"><label>Frecuencia</label>
+              <select id="kFrecuencia"><option value="">—</option><option>SOS</option><option>Una vez</option><option>Cada 4h</option><option>Cada 6h</option><option>Cada 8h</option><option>Cada 12h</option><option>Cada 24h</option><option>Antes de dormir</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Prescrito por</label><input type="text" id="kPrescritoPor" placeholder="Nombre del médico" /></div>
+            <div class="form-group"><label>Hora de administración</label><input type="time" id="kHoraAdmin" /></div>
+            <div class="form-group"><label>Administrado</label>
+              <select id="kAdministrado"><option value="">—</option><option>Sí</option><option>No — paciente rechazó</option><option>No — contraindicado</option><option>Pendiente</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Lote / Vacuna</label><input type="text" id="kLote" placeholder="N.° de lote (para biológicos)" /></div>
+          <div class="form-group">
+            <label class="check-label">
+              <input type="checkbox" id="kReaccion" onchange="toggleReaccion(this)" />
+              <span>⚠️ Se presentó reacción adversa</span>
+            </label>
+          </div>
+          <div id="kReaccionBox" style="display:none;">
+            <div class="form-group"><label>Descripción de la reacción adversa</label><textarea id="kDescReaccion" rows="2" placeholder="Síntomas, tiempo de aparición, manejo…"></textarea></div>
+          </div>
+          <div class="form-group"><label>Observaciones</label><textarea id="kObservaciones" rows="2" placeholder="Notas adicionales del Kárdex…"></textarea></div>
+        </div>
+        <div class="form-card" style="grid-column:1/-1;">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Registros Recientes del Paciente</h3></div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:1"><label>Buscar registros por ID</label><input type="text" id="kBuscarId" placeholder="ID del paciente" /></div>
+            <button class="btn-accent" onclick="loadKardex()">🔍 Buscar</button>
+          </div>
+          <div id="kardexLista" class="records-list"></div>
+        </div>
+      </div>
+      <div id="kardexError" class="error-msg" style="display:none;"></div>
+      <div id="kardexSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="kardexBtn" data-label="<span>Registrar en Kárdex</span>" onclick="saveKardex()">
+          <span>Registrar en Kárdex 💊</span>
+        </button>
+      </div>
+    </div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnTogglePass = document.getElementById('btn-toggle-pass');
-            const inputPass = document.getElementById('login-password');
+    <!-- ════ TAB: SIGNOS VITALES ════ -->
+    <div id="tab-signos" class="tab-panel">
+      <div class="panel-header"><h2>Control de Signos Vitales</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Registro de Signos</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="sPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="sPacienteNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="vitals-grid">
+            <div class="vital-item"><label>Temp. (°C)</label><input type="number" id="sTemp" step="0.1" min="34" max="42" placeholder="37.0" /><span class="vital-icon">🌡️</span></div>
+            <div class="vital-item"><label>FC (lpm)</label><input type="number" id="sFC" min="30" max="250" placeholder="80" /><span class="vital-icon">❤️</span></div>
+            <div class="vital-item"><label>FR (rpm)</label><input type="number" id="sFR" min="8" max="40" placeholder="16" /><span class="vital-icon">🫁</span></div>
+            <div class="vital-item"><label>PA (mmHg)</label><input type="text" id="sPA" placeholder="120/80" /><span class="vital-icon">💉</span></div>
+            <div class="vital-item"><label>SpO₂ (%)</label><input type="number" id="sSpo2" min="50" max="100" placeholder="98" /><span class="vital-icon">🩺</span></div>
+            <div class="vital-item"><label>Glucemia (mg/dl)</label><input type="number" id="sGlucemia" min="10" max="600" placeholder="100" /><span class="vital-icon">🩸</span></div>
+            <div class="vital-item"><label>Peso (kg)</label><input type="number" id="sPeso" step="0.1" placeholder="65.0" /><span class="vital-icon">⚖️</span></div>
+            <div class="vital-item"><label>Talla (cm)</label><input type="number" id="sTalla" placeholder="165" /><span class="vital-icon">📏</span></div>
+          </div>
+          <div class="imc-display"><span>IMC: </span><strong id="sImcVal">—</strong><span id="sImcCat" class="imc-cat"></span></div>
+          <div class="form-row">
+            <div class="form-group"><label>Dolor (0–10)</label>
+              <select id="sDolor"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+            </div>
+            <div class="form-group"><label>Estado de conciencia</label>
+              <select id="sConciencia"><option value="">—</option><option>Alerta</option><option>Somnoliento</option><option>Confuso</option><option>Estuporoso</option><option>Inconsciente</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Observaciones</label><textarea id="sObservaciones" rows="2" placeholder="Notas clínicas del registro…"></textarea></div>
+        </div>
+        <div class="form-card" style="grid-column:1/-1;">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Historial de Signos</h3></div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:1"><label>Buscar por ID de paciente</label><input type="text" id="sBuscarId" placeholder="ID del paciente" /></div>
+            <button class="btn-accent" onclick="loadSignosChart()">🔍 Buscar</button>
+          </div>
+          <div id="signosChart" class="signos-chart-container"></div>
+        </div>
+      </div>
+      <div id="signosError" class="error-msg" style="display:none;"></div>
+      <div id="signosSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="signosBtn" data-label="<span>Guardar Signos Vitales</span>" onclick="saveSignos()">
+          <span>Guardar Signos Vitales 📊</span>
+        </button>
+      </div>
+    </div>
 
-            btnTogglePass.addEventListener('click', () => {
-                if (inputPass.type === 'password') {
-                    inputPass.type = 'text';
-                    btnTogglePass.textContent = '🙈';
-                } else {
-                    inputPass.type = 'password';
-                    btnTogglePass.textContent = '👁️';
-                }
-            });
+    <!-- ════ TAB: BALANCE HÍDRICO ════ -->
+    <div id="tab-balance" class="tab-panel">
+      <div class="panel-header"><h2>Balance Hidroelectrolítico</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos del Turno</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="bPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="bPacienteNombre" placeholder="Nombre completo" /></div>
+            <div class="form-group"><label>Turno</label>
+              <select id="bTurno"><option value="">—</option><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Ingesta (mL)</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>Ingesta oral</label><input type="number" id="bIngestaOral" min="0" placeholder="0" oninput="calcBalance()" /></div>
+            <div class="form-group"><label>Ingesta parenteral / IV</label><input type="number" id="bIngestaParenteral" min="0" placeholder="0" oninput="calcBalance()" /></div>
+          </div>
+          <div class="balance-total">Total ingesta: <strong id="bIngestaTotal">0 mL</strong></div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">03</span><h3>Eliminación (mL)</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>Urinaria</label><input type="number" id="bEliminacionUrinaria" min="0" placeholder="0" oninput="calcBalance()" /></div>
+            <div class="form-group"><label>Heces</label><input type="number" id="bEliminacionHeces" min="0" placeholder="0" oninput="calcBalance()" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Drenajes</label><input type="number" id="bEliminacionDrenajes" min="0" placeholder="0" oninput="calcBalance()" /></div>
+            <div class="form-group"><label>Otros (vómito, sudor…)</label><input type="number" id="bEliminacionOtros" min="0" placeholder="0" oninput="calcBalance()" /></div>
+          </div>
+          <div class="balance-total">Total eliminación: <strong id="bEliminacionTotal">0 mL</strong></div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">04</span><h3>Balance Neto</h3></div>
+          <div class="balance-hero">
+            <div class="balance-result">
+              <span>Balance hídrico:</span>
+              <strong id="bBalance" class="balance-pos">+0 mL</strong>
+            </div>
+            <p class="balance-legend">Positivo = mayor ingesta | Negativo = mayor pérdida</p>
+          </div>
+          <div class="form-group"><label>Observaciones</label><textarea id="bObservaciones" rows="2" placeholder="Notas del balance…"></textarea></div>
+        </div>
+      </div>
+      <div id="balanceError" class="error-msg" style="display:none;"></div>
+      <div id="balanceSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="balanceBtn" data-label="<span>Guardar Balance</span>" onclick="saveBalance()">
+          <span>Guardar Balance 💧</span>
+        </button>
+      </div>
+    </div>
 
-            document.getElementById('form-login').addEventListener('submit', ejecutarLogin);
-            document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
-            document.getElementById('select-paciente').addEventListener('change', (e) => {
-                if(e.target.value) cargarHistorialNotas(e.target.value);
-                else limpiarHistorial();
-            });
-            document.getElementById('form-nota').addEventListener('submit', guardarNota);
-        });
+    <!-- ════ TAB: NOTAS DE ENFERMERÍA ════ -->
+    <div id="tab-notas" class="tab-panel">
+      <div class="panel-header"><h2>Notas de Enfermería</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Redacción de Nota</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="nPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="nPacienteNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Turno</label>
+              <select id="nTurno"><option value="">—</option><option>Mañana</option><option>Tarde</option><option>Noche</option></select>
+            </div>
+            <div class="form-group"><label>Tipo de nota</label>
+              <select id="nTipoNota"><option value="">—</option><option>Evolución</option><option>Procedimiento</option><option>Reporte de turno</option><option>Incidente</option><option>Educación al paciente</option><option>Alta</option><option>Nota SOAP</option></select>
+            </div>
+          </div>
+          <div class="soap-guide">
+            <div class="soap-tag">Guía SOAP</div>
+            <span><b>S</b>ubjetivo — <b>O</b>bjetivo — <b>A</b>nálisis — <b>P</b>lan</span>
+          </div>
+          <div class="form-group"><label>Nota de enfermería *</label><textarea id="nNota" rows="8" placeholder="S: [Queja del paciente en sus palabras]&#10;O: [Hallazgos objetivos: signos vitales, observaciones]&#10;A: [Análisis enfermero, diagnóstico de enfermería]&#10;P: [Plan de cuidados, intervenciones, educación]"></textarea></div>
+          <div class="firma-display">
+            <span>Firmado digitalmente por:</span>
+            <strong id="firmaTexto"></strong>
+          </div>
+        </div>
+        <div class="form-card" style="grid-column:1/-1;">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Notas Recientes</h3></div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:1"><label>Buscar por ID de paciente</label><input type="text" id="nBuscarId" placeholder="ID del paciente" /></div>
+            <button class="btn-accent" onclick="loadNotasRecientes()">🔍 Buscar</button>
+          </div>
+          <div id="notasLista" class="records-list"></div>
+        </div>
+      </div>
+      <div id="notasError" class="error-msg" style="display:none;"></div>
+      <div id="notasSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="notasBtn" data-label="<span>Guardar Nota</span>" onclick="saveNota()">
+          <span>Guardar Nota 📝</span>
+        </button>
+      </div>
+    </div>
 
-        function ejecutarLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-entrar');
-            const errorDiv = document.getElementById('login-error');
-            btn.disabled = true; btn.textContent = "Verificando...";
-            errorDiv.classList.add('hidden');
+    <!-- ════ TAB: CONSENTIMIENTO INFORMADO ════ -->
+    <div id="tab-consentimiento" class="tab-panel">
+      <div class="panel-header"><h2>Consentimiento Informado</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos del Procedimiento</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="coPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="coPacienteNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="form-group"><label>Procedimiento *</label><input type="text" id="coProcedimiento" placeholder="Nombre del procedimiento a realizar" /></div>
+          <div class="form-group"><label>Descripción del procedimiento</label><textarea id="coDescripcion" rows="3" placeholder="Explica en qué consiste el procedimiento…"></textarea></div>
+          <div class="form-group"><label>Riesgos explicados al paciente</label><textarea id="coRiesgos" rows="3" placeholder="Lista de riesgos informados…"></textarea></div>
+          <div class="form-group"><label>Alternativas disponibles</label><textarea id="coAlternativas" rows="2" placeholder="Otras opciones de tratamiento…"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Testigo / Acudiente</label><input type="text" id="coTestigo" placeholder="Nombre del testigo (si aplica)" /></div>
+          </div>
+          <div class="form-group">
+            <label class="check-label">
+              <input type="checkbox" id="coAcepta" />
+              <span>✅ El paciente / acudiente acepta el procedimiento y firma</span>
+            </label>
+          </div>
+          <div class="form-group"><label>Observaciones</label><textarea id="coObservaciones" rows="2" placeholder="Notas adicionales…"></textarea></div>
+        </div>
+      </div>
+      <div id="consentError" class="error-msg" style="display:none;"></div>
+      <div id="consentSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="consentBtn" data-label="<span>Registrar Consentimiento</span>" onclick="saveConsentimiento()">
+          <span>Registrar Consentimiento ✅</span>
+        </button>
+      </div>
+    </div>
 
-            const usuario = document.getElementById('login-usuario').value;
-            const pass = document.getElementById('login-password').value;
+    <!-- ════ TAB: EPICRISIS ════ -->
+    <div id="tab-epicrisis" class="tab-panel">
+      <div class="panel-header"><h2>Epicrisis — Resumen de Egreso</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos del Egreso</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID Paciente *</label><input type="text" id="epPacienteId" placeholder="Identificación" /></div>
+            <div class="form-group"><label>Nombre del Paciente</label><input type="text" id="epPacienteNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Fecha de ingreso</label><input type="date" id="epFechaIngreso" /></div>
+            <div class="form-group"><label>Días de estancia</label><input type="number" id="epDias" min="0" placeholder="0" /></div>
+          </div>
+          <div class="form-group"><label>Motivo de ingreso</label><textarea id="epMotivoIngreso" rows="2" placeholder="Motivo por el cual ingresó…"></textarea></div>
+          <div class="form-group"><label>Resumen de evolución</label><textarea id="epResumen" rows="4" placeholder="Evolución clínica durante la hospitalización…"></textarea></div>
+          <div class="form-group"><label>Procedimientos realizados</label><textarea id="epProcedimientos" rows="2" placeholder="Cirugías, procedimientos, interconsultas…"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Diagnóstico de egreso</label><input type="text" id="epDiagnostico" placeholder="Diagnóstico final" /></div>
+            <div class="form-group"><label>Código CIE-10 egreso</label><input type="text" id="epCIE10" placeholder="Ej. K35.9" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Condición al egreso</label>
+              <select id="epCondicion"><option value="">—</option><option>Mejoría</option><option>Curado</option><option>Estacionario</option><option>Traslado</option><option>Fallecido</option><option>Retiro voluntario</option></select>
+            </div>
+            <div class="form-group"><label>Tipo de egreso</label>
+              <select id="epTipoEgreso"><option value="">—</option><option>Alta médica</option><option>Traslado</option><option>Retiro voluntario</option><option>Defunción</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Recomendaciones al alta</label><textarea id="epRecomendaciones" rows="2" placeholder="Cuidados en casa, restricciones…"></textarea></div>
+          <div class="form-group"><label>Medicamentos al egreso</label><textarea id="epMedicamentos" rows="2" placeholder="Medicamentos de salida con dosis…"></textarea></div>
+          <div class="form-group"><label>Citas de control</label><input type="text" id="epCitas" placeholder="Especialidad, fecha estimada…" /></div>
+        </div>
+      </div>
+      <div id="epicrisisError" class="error-msg" style="display:none;"></div>
+      <div id="epicrisisSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="epicrisisBtn" data-label="<span>Guardar Epicrisis</span>" onclick="saveEpicrisis()">
+          <span>Guardar Epicrisis 📄</span>
+        </button>
+      </div>
+    </div>
 
-            google.script.run.withSuccessHandler(resultado => {
-                btn.disabled = false; btn.textContent = "Iniciar Sesión";
+    <!-- ════ TAB: BUSCAR ════ -->
+    <div id="tab-buscar" class="tab-panel">
+      <div class="panel-header"><h2>Búsqueda de Pacientes</h2></div>
+      <div class="search-bar-big">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre, ID, diagnóstico o EPS…" oninput="filterPatients()" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div id="searchResults" class="patient-grid"></div>
+      <p id="searchEmpty" class="empty-state" style="display:none;">Sin resultados para esa búsqueda.</p>
+    </div>
 
-                if (resultado.exito) {
-                    usuarioLogueado = resultado.usuario;
-                    document.getElementById('sesion-nombre').textContent = usuarioLogueado.nombre;
-                    document.getElementById('sesion-rol').textContent = usuarioLogueado.rol;
-                    document.getElementById('input-enfermera-firma').value = usuarioLogueado.nombre;
-                    
-                    document.getElementById('vista-login').classList.add('hidden');
-                    document.getElementById('vista-app').classList.remove('hidden');
-                    document.body.style.display = "block";
-                    inicializarApp();
-                } else {
-                    errorDiv.textContent = resultado.mensaje;
-                    errorDiv.classList.remove('hidden');
-                }
-            }).verificarLogin(usuario, pass);
-        }
+    <!-- ════ TAB: EVALUACIONES (Docente) ════ -->
+    <div id="tab-evaluaciones" class="tab-panel">
+      <div class="panel-header"><h2>Evaluación de Competencias</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Datos de la Evaluación</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>ID del Estudiante *</label><input type="text" id="evalEstId" placeholder="Código estudiantil" /></div>
+            <div class="form-group"><label>Nombre del Estudiante</label><input type="text" id="evalEstNombre" placeholder="Nombre completo" /></div>
+          </div>
+          <div class="form-group"><label>ID del Paciente asociado</label><input type="text" id="evalPacienteId" placeholder="Caso clínico evaluado" /></div>
+          <div class="form-group"><label>Competencia evaluada *</label>
+            <select id="evalCompetencia">
+              <option value="">Seleccionar competencia…</option>
+              <option>Historia clínica y valoración</option>
+              <option>Admisión y RIPS</option>
+              <option>Kárdex y administración de medicamentos</option>
+              <option>Signos vitales</option>
+              <option>Balance hídrico</option>
+              <option>Notas de enfermería</option>
+              <option>Consentimiento informado</option>
+              <option>Epicrisis</option>
+              <option>Comunicación con el paciente</option>
+              <option>Ética y confidencialidad</option>
+              <option>Seguridad del paciente</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Criterio específico *</label><input type="text" id="evalCriterio" placeholder="Ej. Registra correctamente la TA según protocolo" /></div>
+          <div class="form-group"><label>Calificación</label>
+            <select id="evalCalificacion">
+              <option value="">Seleccionar…</option>
+              <option>5.0 — Excelente</option>
+              <option>4.5 — Muy bueno</option>
+              <option>4.0 — Bueno</option>
+              <option>3.5 — Aceptable</option>
+              <option>3.0 — Suficiente</option>
+              <option>2.5 — Deficiente</option>
+              <option>2.0 — Insuficiente</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Observaciones del docente</label><textarea id="evalObservaciones" rows="4" placeholder="Retroalimentación constructiva para el estudiante…"></textarea></div>
+        </div>
+      </div>
+      <div id="evalError" class="error-msg" style="display:none;"></div>
+      <div id="evalSuccess" class="success-msg" style="display:none;"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="evalBtn" data-label="<span>Guardar Evaluación</span>" onclick="saveEvaluacion()">
+          <span>Guardar Evaluación ⭐</span>
+        </button>
+      </div>
+    </div>
 
-        function inicializarApp() {
-            google.script.run.withSuccessHandler(pacientes => {
-                const select = document.getElementById('select-paciente');
-                select.innerHTML = '<option value="">Seleccione un paciente...</option>';
-                pacientes.forEach(p => {
-                    let opt = document.createElement('option');
-                    opt.value = p.id_paciente;
-                    opt.textContent = `${p.nombre} ${p.apellido}`;
-                    select.appendChild(opt);
-                });
-            }).obtenerDatosTabla('Pacientes');
-        }
+    <!-- ════ TAB: GESTIÓN DE USUARIOS (Administrador) ════ -->
+    <div id="tab-usuarios" class="tab-panel">
+      <div class="panel-header">
+        <h2>Gestión de Usuarios</h2>
+        <button class="btn-accent" onclick="loadUsuarios()">🔄 Actualizar</button>
+      </div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Crear Nuevo Usuario</h3></div>
+          <div class="info-box" style="margin-bottom:1rem;">
+            <strong>⚠️ Solo el Administrador puede crear usuarios.</strong> Los usuarios creados podrán iniciar sesión inmediatamente.
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Usuario (login) *</label><input type="text" id="nuUsuario" placeholder="Ej. estudiante03" /></div>
+            <div class="form-group"><label>Contraseña *</label><input type="text" id="nuPassword" placeholder="Mínimo 6 caracteres" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre completo *</label><input type="text" id="nuNombre" placeholder="Nombre y apellido" /></div>
+            <div class="form-group"><label>Rol *</label>
+              <select id="nuRol">
+                <option value="">Seleccionar rol…</option>
+                <option>Estudiante</option>
+                <option>Enfermero</option>
+                <option>Docente</option>
+                <option>Paciente</option>
+                <option>Administrador</option>
+              </select>
+            </div>
+          </div>
+          <div id="nuError" class="error-msg" style="display:none;"></div>
+          <div id="nuSuccess" class="success-msg" style="display:none;"></div>
+          <div class="form-actions">
+            <button class="btn-primary" id="nuBtn" data-label="<span>Crear Usuario</span>" onclick="crearUsuario()">
+              <span>Crear Usuario 👤</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-card" style="grid-column:1/-1;">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Usuarios Registrados</h3></div>
+          <div id="usuariosLista" class="records-list"><p class="empty-state">Cargando usuarios…</p></div>
+        </div>
+      </div>
+    </div>
 
-        function cargarHistorialNotas(idPaciente) {
-            const contenedor = document.getElementById('contenedor-notas');
-            const info = document.getElementById('info-paciente-seleccionado');
-            info.textContent = "Cargando historial auditado...";
-            
-            google.script.run.withSuccessHandler(notas => {
-                contenedor.innerHTML = '';
-                if(notas.length === 0) {
-                    info.textContent = "No existen registros previos para este paciente.";
-                    return;
-                }
-                info.textContent = `Mostrando ${notas.length} notas visibles para todo el personal autorizado.`;
-                
-                notas.reverse().forEach(nota => {
-                    const div = document.createElement('div');
-                    div.className = 'nota-item';
-                    div.innerHTML = `
-                        <div class="nota-header">
-                            <span>📅 ${nota.fecha} - ⏰ ${nota.hora}</span>
-                            <span>👩‍⚕️ Registrado por: <strong>${nota.nombre_enfermera}</strong></span>
-                        </div>
-                        <div class="nota-vitals">📊 Signos: ${nota.signos_vitales}</div>
-                        <p>👁️ <strong>Evolución:</strong> ${nota.observaciones}</p>
-                    `;
-                    contenedor.appendChild(div);
-                });
-            }).obtenerNotasPaciente(idPaciente);
-        }
+    <!-- ════ TAB: SOLICITUDES PACIENTE ════ -->
+    <div id="tab-solicitudes-pac" class="tab-panel">
+      <div class="panel-header"><h2>Mis Solicitudes al Equipo de Enfermería</h2></div>
+      <div class="hc-form-grid">
+        <div class="form-card">
+          <div class="form-card-header"><span class="form-card-num">01</span><h3>Nueva Solicitud</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>¿Qué necesitas?</label>
+              <select id="solTipo">
+                <option value="">Tipo de solicitud…</option>
+                <option>Dolor o malestar</option><option>Medicamento</option>
+                <option>Información médica</option><option>Necesidad de higiene</option>
+                <option>Alimentación</option><option>Posición / movilidad</option>
+                <option>Llamar a familiar</option><option>Otro</option>
+              </select>
+            </div>
+            <div class="form-group"><label>¿Tienes dolor?</label>
+              <select id="solTipoDolor">
+                <option value="">—</option><option>No</option><option>Agudo</option>
+                <option>Crónico</option><option>Punzante</option><option>Ardor</option><option>Presión</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Intensidad (0–10)</label>
+              <select id="solIntensidad"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Describe tu solicitud *</label><textarea id="solSolicitud" rows="4" placeholder="Cuéntanos qué necesitas o cómo te sientes…"></textarea></div>
+          <div id="solicitudError" class="error-msg" style="display:none;"></div>
+          <div id="solicitudSuccess" class="success-msg" style="display:none;"></div>
+          <div class="form-actions">
+            <button class="btn-primary" id="solicitudBtn" data-label="<span>Enviar solicitud</span>" onclick="saveSolicitud()">
+              <span>Enviar solicitud 📨</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-card" style="grid-column:1/-1;">
+          <div class="form-card-header"><span class="form-card-num">02</span><h3>Mis Solicitudes</h3></div>
+          <button class="btn-accent" style="margin-bottom:1rem" onclick="loadMisSolicitudes()">🔄 Actualizar</button>
+          <div id="misSolicitudesLista"><p class="empty-state">Cargando solicitudes…</p></div>
+        </div>
+      </div>
+    </div>
 
-        function guardarNota(e) {
-            e.preventDefault();
-            if(!usuarioLogueado.id_enfermera){
-                alert("Error: Tu cuenta de usuario no está vinculada a un ID de Enfermera válido.");
-                return;
-            }
+    <!-- ════ TAB: CITAS (Paciente) ════ -->
+    <div id="tab-citas-pac" class="tab-panel">
+      <div class="panel-header"><h2>📅 Mis Citas Médicas</h2></div>
 
-            const btn = document.getElementById('btn-guardar');
-            btn.disabled = true; btn.textContent = "Guardando firma digital...";
-            const idPaciente = document.getElementById('select-paciente').value;
+      <!-- Sub-tabs de citas -->
+      <div class="citas-subtabs">
+        <button class="citas-subtab active" onclick="showCitasSubtab('agendarCita', this)">📋 Agendar Cita</button>
+        <button class="citas-subtab" onclick="showCitasSubtab('misCitas', this)">📁 Mis Citas</button>
+      </div>
 
-            const nuevaNota = {
-                id_paciente: idPaciente,
-                id_enfermera: usuarioLogueado.id_enfermera,
-                signos_vitales: document.getElementById('signos-vitales').value,
-                observaciones: document.getElementById('observaciones').value
-            };
+      <!-- Agendar Cita -->
+      <div id="agendarCita" class="citas-subpanel">
+        <div class="hc-form-grid">
+          <div class="form-card">
+            <div class="form-card-header"><span class="form-card-num">01</span><h3>Seleccionar Médico y Fecha</h3></div>
+            <div class="form-group">
+              <label>Especialidad</label>
+              <select id="citaEspecialidad" onchange="filtrarMedicosPorEsp()">
+                <option value="">— Todas las especialidades —</option>
+                <option>Medicina General</option><option>Pediatría</option><option>Cardiología</option>
+                <option>Ginecología</option><option>Dermatología</option><option>Neurología</option>
+                <option>Ortopedia</option><option>Psiquiatría</option><option>Otro</option>
+              </select>
+            </div>
+            <div id="medicosDisponiblesContainer" class="medicos-grid"></div>
+          </div>
 
-            google.script.run.withSuccessHandler(resultado => {
-                btn.disabled = false; btn.textContent = "Guardar Nota Médica";
-                if(resultado.exito) {
-                    document.getElementById('signos-vitales').value = '';
-                    document.getElementById('observaciones').value = '';
-                    cargarHistorialNotas(idPaciente);
-                } else {
-                    alert("Error: " + resultado.mensaje);
-                }
-            }).guardarNotaEnfermeria(nuevaNota);
-        }
+          <div class="form-card" id="calendarioCitaCard" style="display:none;">
+            <div class="form-card-header"><span class="form-card-num">02</span><h3>Seleccionar Día y Hora</h3></div>
+            <div class="medico-seleccionado-banner" id="medicoSelBanner"></div>
+            <div class="calendario-wrapper">
+              <div class="cal-nav">
+                <button onclick="cambiarMes(-1)">◀</button>
+                <span id="calMesLabel"></span>
+                <button onclick="cambiarMes(1)">▶</button>
+              </div>
+              <div id="calendarioGrid" class="calendario-grid"></div>
+            </div>
+            <div id="horariosContainer" style="margin-top:1rem;display:none;">
+              <h4 class="horas-titulo">Horarios disponibles para <span id="fechaSelLabel"></span></h4>
+              <div id="horariosGrid" class="horarios-grid"></div>
+            </div>
+          </div>
 
-        function limpiarHistorial() {
-            document.getElementById('contenedor-notas').innerHTML = '';
-            document.getElementById('info-paciente-seleccionado').textContent = "Seleccione un paciente para auditar el historial de notas compartidas.";
-        }
+          <div class="form-card" id="confirmarCitaCard" style="display:none;">
+            <div class="form-card-header"><span class="form-card-num">03</span><h3>Confirmar Cita</h3></div>
+            <div class="cita-resumen" id="citaResumen"></div>
+            <div class="form-group"><label>Motivo de la cita</label><textarea id="citaMotivo" rows="2" placeholder="¿Por qué desea la cita?"></textarea></div>
+            <div class="info-box warn">
+              <strong>⚠️ Política de cancelación:</strong> Si cancelas con menos de 24 horas de anticipación o no te presentas, se generará un cargo simbólico. Si no puedes asistir, cancela con tiempo.
+            </div>
+            <div id="citaError" class="error-msg" style="display:none;"></div>
+            <div id="citaSuccess" class="success-msg" style="display:none;"></div>
+            <div class="form-actions">
+              <button class="btn-secondary" onclick="resetAgendarCita()">Cambiar horario</button>
+              <button class="btn-primary" id="citaBtn" onclick="confirmarCita()">
+                <span>Confirmar Cita ✅</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        function cerrarSesion() {
-            usuarioLogueado = null;
-            document.getElementById('login-usuario').value = '';
-            document.getElementById('login-password').value = '';
-            document.getElementById('vista-app').classList.add('hidden');
-            document.getElementById('vista-login').classList.remove('hidden');
-            document.body.style.display = "flex";
-            limpiarHistorial();
-        }
-    </script>
+      <!-- Mis Citas -->
+      <div id="misCitas" class="citas-subpanel" style="display:none;">
+        <button class="btn-accent" style="margin-bottom:1rem" onclick="loadMisCitas()">🔄 Actualizar</button>
+        <div id="misCitasLista"><p class="empty-state">Cargando citas…</p></div>
+      </div>
+    </div>
+
+    <!-- ════ TAB: HISTORIAL PACIENTE ════ -->
+    <div id="tab-historial-pac" class="tab-panel">
+      <div class="panel-header">
+        <h2>📋 Mi Historial Médico</h2>
+        <button class="btn-accent" onclick="loadHistorialPaciente()">🔄 Actualizar</button>
+      </div>
+      <div id="historialContainer">
+        <p class="empty-state">Cargando historial…</p>
+      </div>
+    </div>
+
+    <!-- ════ TAB: MIS SIGNOS (Paciente) ════ -->
+    <div id="tab-mis-signos" class="tab-panel">
+      <div class="panel-header">
+        <h2>Mis Signos Vitales</h2>
+        <button class="btn-accent" onclick="loadMisSignos()">🔄 Actualizar</button>
+      </div>
+      <div id="misSignosContainer"><p class="empty-state">Cargando…</p></div>
+    </div>
+
+  </main>
+</section>
+
+<!-- ════ MODAL: DETALLE HC ════ -->
+<div id="hcModal" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ════ MODAL: CANCELAR / REPROGRAMAR CITA ════ -->
+<div id="citaModal" class="modal-overlay" style="display:none;" onclick="closeCitaModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="document.getElementById('citaModal').style.display='none'">✕</button>
+    <div id="citaModalContent"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script src="app.js"></script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  // Firma digital preview
+  const firmaEl = document.getElementById("firmaTexto");
+  if (firmaEl) {
+    const interval = setInterval(() => {
+      const saved = sessionStorage.getItem("asenorte_user");
+      if (saved) {
+        const u = JSON.parse(saved);
+        firmaEl.textContent = u.nombre + " — " + new Date().toLocaleDateString("es-CO");
+        clearInterval(interval);
+      }
+    }, 500);
+  }
+  // Signos vitales en tab signos
+  const sPeso  = document.getElementById("sPeso");
+  const sTalla = document.getElementById("sTalla");
+  if (sPeso && sTalla) {
+    [sPeso, sTalla].forEach(el => el.addEventListener("input", calcSignosIMC));
+  }
+});
+
+function toggleReaccion(cb) {
+  document.getElementById("kReaccionBox").style.display = cb.checked ? "block" : "none";
+}
+
+function calcBalance() {
+  const iOral   = parseFloat(document.getElementById("bIngestaOral").value)       || 0;
+  const iParent = parseFloat(document.getElementById("bIngestaParenteral").value)  || 0;
+  const eUrina  = parseFloat(document.getElementById("bEliminacionUrinaria").value)|| 0;
+  const eHeces  = parseFloat(document.getElementById("bEliminacionHeces").value)   || 0;
+  const eDren   = parseFloat(document.getElementById("bEliminacionDrenajes").value)|| 0;
+  const eOtros  = parseFloat(document.getElementById("bEliminacionOtros").value)   || 0;
+  const iTotal  = iOral + iParent;
+  const eTotal  = eUrina + eHeces + eDren + eOtros;
+  const balance = iTotal - eTotal;
+  document.getElementById("bIngestaTotal").textContent     = iTotal.toFixed(0) + " mL";
+  document.getElementById("bEliminacionTotal").textContent = eTotal.toFixed(0) + " mL";
+  const bEl = document.getElementById("bBalance");
+  bEl.textContent = (balance >= 0 ? "+" : "") + balance.toFixed(0) + " mL";
+  bEl.className   = balance >= 0 ? "balance-pos" : "balance-neg";
+}
+
+function calcSignosIMC() {
+  const peso  = parseFloat(document.getElementById("sPeso").value);
+  const talla = parseFloat(document.getElementById("sTalla").value);
+  const imcEl = document.getElementById("sImcVal");
+  const catEl = document.getElementById("sImcCat");
+  if (!peso || !talla || talla < 50) { imcEl.textContent = "—"; catEl.textContent = ""; catEl.className = "imc-cat"; return; }
+  const imc = (peso / ((talla/100)**2)).toFixed(1);
+  imcEl.textContent = imc;
+  const cat = imc < 18.5 ? ["Bajo peso","imc-bajo"] : imc < 25 ? ["Normal","imc-normal"] : imc < 30 ? ["Sobrepeso","imc-sobre"] : ["Obesidad","imc-obeso"];
+  catEl.textContent = cat[0]; catEl.className = `imc-cat ${cat[1]}`;
+}
+</script>
 </body>
 </html>
