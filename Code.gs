@@ -4,7 +4,6 @@
 
 var SPREADSHEET_ID = "1U_qRYdAe9HdbeJ1M_JSxtBNmjZwRn7nYcVoaEl29EvY";
 
-// Cabeceras de respaldo para Historias Clínicas
 var HC_HEADERS = [
   "fecha","registradoPor","nombre","identificacion","fechaNacimiento",
   "sexo","grupoSanguineo","direccion","telefono","eps",
@@ -16,14 +15,7 @@ var HC_HEADERS = [
 function doPost(e) {
   var JSONResponse;
   try {
-    // Detectar y procesar correctamente el payload sin importar cómo lo envíe el navegador
-    var data;
-    if (e.postData.type === "application/json") {
-      data = JSON.parse(e.postData.contents);
-    } else {
-      data = JSON.parse(e.postData.contents); 
-    }
-
+    var data = JSON.parse(e.postData.contents);
     var action = data.action;
 
     if (action === "login") {
@@ -39,7 +31,6 @@ function doPost(e) {
     JSONResponse = { success: false, message: "Error interno del servidor: " + err.toString() };
   }
 
-  // Encapsulado compatible con políticas CORS estrictas de Chrome y Edge
   return ContentService.createTextOutput(JSON.stringify(JSONResponse))
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -49,7 +40,7 @@ function loginUser(username, password) {
   var sheet = ss.getSheetByName("Usuarios");
 
   if (!sheet) {
-    return { success: false, message: "Error: No se encontró la pestaña 'Usuarios' en la hoja de cálculo." };
+    return { success: false, message: "Error: No se encontró la pestaña 'Usuarios'." };
   }
 
   var data = sheet.getDataRange().getValues();
@@ -57,7 +48,6 @@ function loginUser(username, password) {
     return { success: false, message: "La base de datos de usuarios está vacía." };
   }
 
-  // Normalizar encabezados a minúsculas
   var headers = data[0].map(function(h) { return String(h).trim().toLowerCase(); });
   var userIdx = headers.indexOf("usuario");
   var passIdx = headers.indexOf("password");
@@ -120,6 +110,6 @@ function getHistorias() {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Servidor Clínico ASENORTE Activo" }))
+  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Servidor Clínico Activo" }))
     .setMimeType(ContentService.MimeType.JSON);
 }
