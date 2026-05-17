@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSIÓN OPERATIVA COMPLETA)
+   ASENORTE · app.js (VERSIÓN OPERATIVA CORREGIDA - CHROME & EDGE)
    Control de interfaz de usuario, navegación por pestañas y API.
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyawhLFi2jPXLkcqDA1mfRDBwm8FxWukH-IYW8vcKWRXkYRheQ2OPF6PbpT5WXoejLtYw/exec",
+   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyawhLFi2jPXLkcqDA1mfRDBwm8FxWukH-IYW8vcKWRXkYRheQ2OPF6PbpT5WXoejLtYw/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
@@ -14,7 +14,7 @@ let allPatients  = [];
 
 // ── Inicialización General del Sistema ──────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  // Asegurar estados visuales limpios
+  // Asegurar estados visuales limpios de arranque
   const loginScreen = document.getElementById("loginScreen");
   const dashboardScreen = document.getElementById("dashboardScreen");
   if (loginScreen) loginScreen.style.setProperty("display", "flex", "important");
@@ -42,7 +42,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Escucha del cálculo del IMC automático
+  // Escucha del cálculo del IMC automático (Con verificación de existencia)
   document.getElementById("svPeso")?.addEventListener("input", calcIMC);
   document.getElementById("svTalla")?.addEventListener("input", calcIMC);
 
@@ -62,7 +62,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("hcForm")?.addEventListener("submit", handleGuardarHistoria);
 });
 
-// ── Procesar Inicio de Sesión (Chrome / Edge Fix) ─────────────────
+// ── Procesar Inicio de Sesión (Chrome / Edge Fix Exacto) ─────────
 async function handleLogin(e) {
   e.preventDefault();
   const userIn = document.getElementById("username")?.value.trim();
@@ -72,7 +72,7 @@ async function handleLogin(e) {
 
   if (errEl) hide(errEl);
   if (!userIn || !passIn) {
-    if (errEl) showError(errEl, "Por favor digite sus credenciales completas.");
+    if (errEl) showError(errEl, "Por favor digite su usuario y contraseña.");
     return;
   }
 
@@ -86,7 +86,7 @@ async function handleLogin(e) {
       body: JSON.stringify({ action: "login", usuario: userIn, password: passIn })
     });
 
-    if (!response.ok) throw new Error("Error en la respuesta del servidor web.");
+    if (!response.ok) throw new Error("Error en la respuesta del servidor web de Google.");
     const res = await response.json();
 
     if (res.success) {
@@ -97,9 +97,9 @@ async function handleLogin(e) {
       if (errEl) showError(errEl, res.message || "Usuario o contraseña inválidos.");
     }
   } catch (error) {
-    console.error(error);
-    if (errEl) showError(errEl, "Error de red o conexión bloqueada en este navegador.");
-  } finaly {
+    console.error("Detalle de fallo en Login:", error);
+    if (errEl) showError(errEl, "Error de red o conexión rechazada por políticas del navegador.");
+  } finally {
     if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
 }
@@ -160,7 +160,7 @@ function renderPatients(list) {
   if (!container) return;
 
   container.innerHTML = "";
-  if (list.length === 0) {
+  if (!list || list.length === 0) {
     if (empty) empty.style.display = "block";
     return;
   }
@@ -190,7 +190,7 @@ function renderPatients(list) {
 
 // Buscador en tiempo real
 function searchPatients() {
-  const query = document.getElementById("searchInput").value.toLowerCase().trim();
+  const query = document.getElementById("searchInput")?.value.toLowerCase().trim();
   if (!query) {
     renderPatients(allPatients);
     return;
@@ -212,32 +212,32 @@ async function handleGuardarHistoria(e) {
   const bodyData = {
     fecha: new Date().toISOString(),
     registradoPor: currentUser ? currentUser.usuario : "Anónimo",
-    nombre: document.getElementById("hcNombre").value.trim(),
-    identificacion: document.getElementById("hcIdentificacion").value.trim(),
-    fechaNacimiento: document.getElementById("hcFechaNac").value,
-    sexo: document.getElementById("hcSexo").value,
-    grupoSanguineo: document.getElementById("hcRh").value,
-    direccion: document.getElementById("hcDireccion").value.trim(),
-    telefono: document.getElementById("hcTelefono").value.trim(),
-    eps: document.getElementById("hcEps").value.trim(),
-    motivo: document.getElementById("hcMotivo").value.trim(),
-    enfermedadActual: document.getElementById("hcEnfermedad").value.trim(),
-    antPersonales: document.getElementById("hcAntPers").value.trim(),
-    antFamiliares: document.getElementById("hcAntFam").value.trim(),
-    alergias: document.getElementById("hcAlergias").value.trim(),
-    temperatura: document.getElementById("svTemp").value,
-    frecCardiaca: document.getElementById("svFc").value,
-    frecResp: document.getElementById("svFr").value,
-    presionArterial: document.getElementById("svPa").value,
-    spo2: document.getElementById("svSpo2").value,
-    peso: document.getElementById("svPeso").value,
-    talla: document.getElementById("svTalla").value,
-    glucemia: document.getElementById("svGlucemia").value,
-    imc: document.getElementById("svImc").value,
-    examenFisico: document.getElementById("hcExamen").value.trim(),
-    diagnostico: document.getElementById("hcDiagnostico").value.trim(),
-    plan: document.getElementById("hcPlan").value.trim(),
-    observaciones: document.getElementById("hcObs").value.trim()
+    nombre: document.getElementById("hcNombre")?.value.trim() || "",
+    identificacion: document.getElementById("hcIdentificacion")?.value.trim() || "",
+    fechaNacimiento: document.getElementById("hcFechaNac")?.value || "",
+    sexo: document.getElementById("hcSexo")?.value || "",
+    grupoSanguineo: document.getElementById("hcRh")?.value || "",
+    direccion: document.getElementById("hcDireccion")?.value.trim() || "",
+    telefono: document.getElementById("hcTelefono")?.value.trim() || "",
+    eps: document.getElementById("hcEps")?.value.trim() || "",
+    motivo: document.getElementById("hcMotivo")?.value.trim() || "",
+    enfermedadActual: document.getElementById("hcEnfermedad")?.value.trim() || "",
+    antPersonales: document.getElementById("hcAntPers")?.value.trim() || "",
+    antFamiliares: document.getElementById("hcAntFam")?.value.trim() || "",
+    alergias: document.getElementById("hcAlergias")?.value.trim() || "",
+    temperatura: document.getElementById("svTemp")?.value || "",
+    frecCardiaca: document.getElementById("svFc")?.value || "",
+    frecResp: document.getElementById("svFr")?.value || "",
+    presionArterial: document.getElementById("svPa")?.value || "",
+    spo2: document.getElementById("svSpo2")?.value || "",
+    peso: document.getElementById("svPeso")?.value || "",
+    talla: document.getElementById("svTalla")?.value || "",
+    glucemia: document.getElementById("svGlucemia")?.value || "",
+    imc: document.getElementById("svImc")?.value || "",
+    examenFisico: document.getElementById("hcExamen")?.value.trim() || "",
+    diagnostico: document.getElementById("hcDiagnostico")?.value.trim() || "",
+    plan: document.getElementById("hcPlan")?.value.trim() || "",
+    observaciones: document.getElementById("hcObs")?.value.trim() || ""
   };
 
   if (btn) setLoading(btn, true, "");
@@ -287,13 +287,13 @@ function show(el) { if (el) el.style.display = ""; }
 function hide(el) { if (el) el.style.display = "none"; }
 function showError(el, msg) { if (el) { el.textContent = msg; show(el); } }
 function sanitize(str) { const d = document.createElement("div"); d.textContent = String(str ?? ""); return d.innerHTML; }
-function getInitials(n) { return n.split(" ").slice(0,2).map(w => w[0]).join("").toUpperCase() || "?"; }
+function getInitials(n) { if(!n) return "?"; return n.split(" ").slice(0,2).map(w => w[0]).join("").toUpperCase() || "?"; }
 function formatDate(iso) { if (!iso) return "—"; try { return new Date(iso).toLocaleDateString("es-CO", { day:"2-digit", month:"short", year:"numeric" }); } catch { return String(iso); } }
 
 function setLoading(btn, loading, htmlText) {
   if (!btn) return;
   btn.disabled = loading;
-  btn.innerHTML = loading ? `<div class="spinner"></div> <span>Cargando...</span>` : `<span>${htmlText || "Guardar Registro"}</span>`;
+  btn.innerHTML = loading ? `<div class="spinner"></div> <span style="margin-left:8px;">Cargando...</span>` : `<span>${htmlText || "Guardar Registro"}</span>`;
 }
 
 function showToast(msg) {
