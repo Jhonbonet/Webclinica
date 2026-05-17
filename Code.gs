@@ -1,154 +1,125 @@
 // ═══════════════════════════════════════════════════════════════
-// ASENORTE · Code.gs  (Google Apps Script)
-// 
-// INSTRUCCIONES DE CONFIGURACIÓN:
-//   1. Ve a https://script.google.com → Nuevo proyecto.
-//   2. Pega todo este código en el editor.
-//   3. Cambia SPREADSHEET_ID por el ID de tu hoja de cálculo
-//      (aparece en la URL: .../spreadsheets/d/[ESTE_ID]/edit).
-//   4. Crea dos hojas dentro del Spreadsheet:
-//        • "Usuarios"          (columnas: usuario | password | nombre | rol)
-//        • "HistoriasClinicas" (se crea automáticamente con los headers)
-//   5. Implementar → Nueva implementación:
-//        • Tipo: Aplicación web
-//        • Ejecutar como: Yo
-//        • Acceso: Cualquier persona
-//   6. Copia la URL generada y pégala en app.js → CONFIG.APPS_SCRIPT_URL
+// ASENORTE · Code.gs (Google Apps Script - MOTOR DEFINITIVO)
 // ═══════════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = "1U_qRYdAe9HdbeJ1M_JSxtBNmjZwRn7nYcVoaEl29EvY";
 
-// ── Cabeceras de HistoriasClinicas ──────────────────────────
+// Cabeceras de respaldo para Historias Clínicas
 var HC_HEADERS = [
   "fecha","registradoPor","nombre","identificacion","fechaNacimiento",
   "sexo","grupoSanguineo","direccion","telefono","eps",
   "motivo","enfermedadActual","antPersonales","antFamiliares","alergias",
   "temperatura","frecCardiaca","frecResp","presionArterial","spo2",
-  "peso","talla","glucemia","imc",
-  "examenFisico","diagnostico","plan","observaciones"
+  "peso","talla","glucemia","imc","examenFisico","diagnostico","plan","observaciones"
 ];
 
-// ── GET ──────────────────────────────────────────────────────
-function doGet(e) {
-  var action = e.parameter.action;
-  var result;
-
-  if (action === "login") {
-    result = loginUser(e.parameter.usuario, e.parameter.password);
-  } else if (action === "getHistorias") {
-    result = getHistorias();
-  } else {
-    result = { success: false, message: "Acción no reconocida" };
-  }
-
-  return jsonResponse(result);
-}
-
-// ── POST ─────────────────────────────────────────────────────
 function doPost(e) {
-  var body   = JSON.parse(e.postData.contents);
-  var action = body.action;
-  var result;
+  var JSONResponse;
+  try {
+    // Detectar y procesar correctamente el payload sin importar cómo lo envíe el navegador
+    var data;
+    if (e.postData.type === "application/json") {
+      data = JSON.parse(e.postData.contents);
+    } else {
+      data = JSON.parse(e.postData.contents); 
+    }
 
-  if (action === "saveHistoria") {
-    result = saveHistoria(body);
-  } else {
-    result = { success: false, message: "Acción no reconocida" };
+    var action = data.action;
+
+    if (action === "login") {
+      JSONResponse = loginUser(data.usuario, data.password);
+    } else if (action === "guardarHistoria") {
+      JSONResponse = guardarHistoria(data.body);
+    } else if (action === "getHistorias") {
+      JSONResponse = getHistorias();
+    } else {
+      JSONResponse = { success: false, message: "Acción no válida o no especificada." };
+    }
+  } catch (err) {
+    JSONResponse = { success: false, message: "Error interno del servidor: " + err.toString() };
   }
 
-  return jsonResponse(result);
+  // Encapsulado compatible con políticas CORS estrictas de Chrome y Edge
+  return ContentService.createTextOutput(JSON.stringify(JSONResponse))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
-function loginUser(usuario, password) {
-  if (!usuario || !password) {
-    return { success: false, message: "Faltan credenciales" };
-  }
-
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function loginUser(username, password) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Usuarios");
 
   if (!sheet) {
-    return { success: false, message: "Hoja 'Usuarios' no encontrada" };
+    return { success: false, message: "Error: No se encontró la pestaña 'Usuarios' en la hoja de cálculo." };
   }
 
   var data = sheet.getDataRange().getValues();
-  // Fila 0 = encabezados
+  if (data.length < 2) {
+    return { success: false, message: "La base de datos de usuarios está vacía." };
+  }
+
+  // Normalizar encabezados a minúsculas
+  var headers = data[0].map(function(h) { return String(h).trim().toLowerCase(); });
+  var userIdx = headers.indexOf("usuario");
+  var passIdx = headers.indexOf("password");
+  var nomIdx  = headers.indexOf("nombre");
+  var rolIdx  = headers.indexOf("rol");
+
+  if (userIdx === -1 || passIdx === -1) {
+    return { success: false, message: "Estructura incorrecta. Faltan las columnas 'usuario' y 'password'." };
+  }
+
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
-    if (String(row[0]).trim() === usuario && String(row[1]).trim() === password) {
+    var sheetUser = String(row[userIdx]).trim().toLowerCase();
+    var sheetPass = String(row[passIdx]).trim();
+
+    if (sheetUser === String(username).trim().toLowerCase() && sheetPass === String(password).trim()) {
       return {
         success: true,
-        nombre:  String(row[2] || usuario),
-        rol:     String(row[3] || "Estudiante")
+        user: {
+          usuario: row[userIdx],
+          nombre: nomIdx !== -1 && row[nomIdx] ? row[nomIdx] : row[userIdx],
+          rol: rolIdx !== -1 && row[rolIdx] ? row[rolIdx] : "Estudiante"
+        }
       };
     }
   }
 
-  return { success: false, message: "Usuario o contraseña incorrectos" };
+  return { success: false, message: "El usuario o la contraseña son incorrectos." };
 }
 
-// ── GUARDAR HISTORIA ─────────────────────────────────────────
-function saveHistoria(body) {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName("HistoriasClinicas");
-
-  // Crear hoja si no existe
-  if (!sheet) {
-    sheet = ss.insertSheet("HistoriasClinicas");
-    sheet.appendRow(HC_HEADERS);
-    sheet.getRange(1, 1, 1, HC_HEADERS.length)
-         .setFontWeight("bold")
-         .setBackground("#0D1F3C")
-         .setFontColor("#FFFFFF");
-  }
-
-  // Si la hoja existe pero está vacía, agregar headers
+function guardarHistoria(body) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName("HistoriasClinicas") || ss.insertSheet("HistoriasClinicas");
+  
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(HC_HEADERS);
-    sheet.getRange(1, 1, 1, HC_HEADERS.length)
-         .setFontWeight("bold")
-         .setBackground("#0D1F3C")
-         .setFontColor("#FFFFFF");
   }
 
-  var row = HC_HEADERS.map(function(key) {
-    return body[key] !== undefined ? body[key] : "";
-  });
-
+  var row = HC_HEADERS.map(function(key) { return body[key] !== undefined ? body[key] : ""; });
   sheet.appendRow(row);
-
-  return { success: true, message: "Historia clínica guardada correctamente" };
+  return { success: true, message: "Historia clínica guardada con éxito." };
 }
 
-// ── LEER HISTORIAS ───────────────────────────────────────────
 function getHistorias() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("HistoriasClinicas");
+  if (!sheet || sheet.getLastRow() < 2) return { success: true, historias: [] };
 
-  if (!sheet || sheet.getLastRow() < 2) {
-    return { success: true, historias: [] };
-  }
-
-  var data    = sheet.getDataRange().getValues();
+  var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var historias = [];
 
-  for (var i = data.length - 1; i >= 1; i--) {   // más reciente primero
+  for (var i = data.length - 1; i >= 1; i--) {
     var row = data[i];
     var obj = {};
-    headers.forEach(function(h, idx) {
-      obj[h] = row[idx];
-    });
+    headers.forEach(function(h, idx) { obj[h] = row[idx]; });
     historias.push(obj);
   }
-
   return { success: true, historias: historias };
 }
 
-// ── HELPER ───────────────────────────────────────────────────
-function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Servidor Clínico ASENORTE Activo" }))
     .setMimeType(ContentService.MimeType.JSON);
 }
