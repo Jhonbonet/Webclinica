@@ -4,7 +4,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyawhLFi2jPXLkcqDA1mfRDBwm8FxWukH-IYW8vcKWRXkYRheQ2OPF6PbpT5WXoejLtYw/exec",
+   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzZ6C4O-RB83u5ET2PCvkfOGzZR-Z-w_1P4q0ICcaLjcT4WNsuQE077jOTuIz44X42_MA/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
