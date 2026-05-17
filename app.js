@@ -4,7 +4,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxGg7CaON9RSEwETs_7ZFzc0Pk6U_Zy1OxrQdvWx9prhT9fFcmj76X-qonH8gQfjK8RuQ/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxdGudm__M4fyIAHh2eAWFzrPyYozW6L1snOTKdfyt1japi5Y7FvLo6KMuRaQxshdTgzA/exec",
 };
 
 // ─────────────────────────────────────────────────────────────
