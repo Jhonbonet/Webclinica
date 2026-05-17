@@ -8,7 +8,7 @@
 // ⚙️  CONFIGURACIÓN  ← EDITA ESTE VALOR
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwf6FtniL2cY8V-6Zp6H4RhpmCaOIMGduyQe19KnSJd_u24ISof2a3R1rARNTMl00Be/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxGg7CaON9RSEwETs_7ZFzc0Pk6U_Zy1OxrQdvWx9prhT9fFcmj76X-qonH8gQfjK8RuQ/exec",
   SHEET_USUARIOS:  "Usuarios",
   SHEET_HISTORIAS: "HistoriasClinicas",
 };
