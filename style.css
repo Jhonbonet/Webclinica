@@ -1,39 +1,175 @@
 /* ==========================================================================
-   🔧 ADAPTACIONES CRÍTICAS DE CONTROL VISUAL - ASENORTE
+   ASENORTE · Sistema Clínico (Estilo Editorial - Azul Marino + Verde Menta)
    ========================================================================== */
 
-/* Corrección de desborde de textos largos en el Login */
+:root {
+  --navy:    #0D1F3C;
+  --navy-2:  #152845;
+  --navy-3:  #1E3A5F;
+  --accent:  #2D9CDB;
+  --accent-2:#56CCF2;
+  --mint:    #27AE60;
+  --mint-lt: #6FCF97;
+  --danger:  #EB5757;
+  --warn:    #F2994A;
+  --bg:      #F4F7FB;
+  --bg-card: #FFFFFF;
+  --text:    #1A2B45;
+  --text-2:  #4A6080;
+  --text-3:  #8A9BB0;
+  --border:  #DDE5F0;
+  --shadow:  0 2px 16px rgba(13,31,60,0.08);
+  --shadow-lg:0 8px 40px rgba(13,31,60,0.14);
+  --radius:  14px;
+  --radius-sm:8px;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ── PANTALLAS GENERALES ── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  width: 100%;
+}
+.screen.active {
+  display: flex !important;
+}
+
+/* ── LOGIN INTERFAZ ── */
+#loginScreen {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #0A172C 0%, #162A4A 100%);
+}
+
+.login-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.login-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+.blob1 { width: 400px; height: 400px; background: var(--accent); top: -100px; left: -100px; }
+.blob2 { width: 350px; height: 350px; background: var(--mint); bottom: -50px; right: -50px; }
+
+.login-card {
+  position: relative;
+  z-index: 2;
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-mark {
+  color: var(--navy);
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 1rem;
+}
+
 .login-header h1 {
+  font-family: var(--font-display);
   font-size: 2.2rem;
-  margin-bottom: 0.25rem;
+  color: var(--navy);
+  margin-bottom: 0.2rem;
 }
 
 .login-subtitle-fix {
   font-size: 0.95rem;
   color: var(--text-2);
-  max-width: 100%;
   line-height: 1.4;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  padding: 0 5px;
+  margin-bottom: 0.4rem;
 }
 
-/* Contenedor del campo Password con espacio para el ojo */
-.input-password-container {
+.login-header .subtitle {
+  display: inline-block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(45,156,219,0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ── FORMULARIOS E INPUTS ── */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 0.5rem;
+}
+
+.input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-password-container input {
-  padding-right: 48px !important;
+.input-wrapper input, .form-group select, .form-group textarea {
   width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-/* Botón flotante estilizado para el ojito */
+.input-wrapper input:focus {
+  border-color: var(--accent);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(45,156,219,0.15);
+}
+
+/* Ojo de contraseña integrado */
+.input-password-container input {
+  padding-right: 48px !important;
+}
+
 .password-toggle-eye {
   position: absolute;
   right: 12px;
@@ -45,33 +181,92 @@
   align-items: center;
   justify-content: center;
   padding: 6px;
-  transition: color 0.2s ease, transform 0.1s ease;
   z-index: 10;
 }
+.password-toggle-eye:hover { color: var(--navy); }
 
-.password-toggle-eye:hover {
-  color: var(--navy);
+/* ── BOTONES ── */
+.btn-primary {
+  width: 100%;
+  background: var(--navy);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.2s ease;
+}
+.btn-primary:hover { background: var(--navy-2); }
+.btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.error-message {
+  background: rgba(235,87,135,0.08);
+  border: 1px solid rgba(235,87,135,0.2);
+  color: var(--danger);
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  text-align: center;
 }
 
-.password-toggle-eye:active {
-  transform: scale(0.9);
+/* ── DASHBOARD Y ESTRUCTURA (RESTANTE) ── */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--navy);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0; z-index: 100;
 }
+.topbar .brand { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-size: 1.25rem; }
+.topbar .brand svg { width: 24px; height: 24px; fill: currentColor; }
+.topnav { display: flex; gap: 0.5rem; margin-left: 2rem; }
+.nav-btn { background: transparent; border: none; color: var(--text-3); padding: 0.5rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 20px; transition: all 0.2s; }
+.nav-btn.active, .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.user-badge { display: flex; align-items: center; gap: 0.75rem; text-align: left; }
+.avatar { width: 36px; height: 36px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; }
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-size: 0.88rem; font-weight: 500; }
+.user-role { font-size: 0.75rem; color: var(--text-3); }
+.btn-logout { background: transparent; border: none; color: var(--text-3); cursor: pointer; padding: 4px; display: flex; }
+.btn-logout:hover { color: var(--danger); }
+.btn-logout svg { width: 20px; height: 20px; }
 
-.password-toggle-eye svg {
-  width: 20px;
-  height: 20px;
-  display: block;
-}
+.main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 
-/* Spinner animado refinado */
+/* ── ELEMENTOS GRÁFICOS DINÁMICOS ── */
 .spinner {
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
   border-top: 2px solid currentColor;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  display: inline-block;
 }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); justify-content: space-around; padding: 0.5rem; z-index: 150; }
+.bottom-nav-btn { background: transparent; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--text-3); cursor: pointer; font-family: var(--font-sans); }
+.bottom-nav-btn svg { width: 22px; height: 22px; margin-bottom: 2px; stroke: currentColor; }
+.bottom-nav-btn.active { color: var(--navy); }
+.text-danger { color: var(--danger) !important; }
+
+@media (max-width: 768px) {
+  .topnav, .topbar-right .user-badge { display: none; }
+  .bottom-nav { display: flex; }
+  .main-content { padding: 1rem 1rem 5rem; }
 }
