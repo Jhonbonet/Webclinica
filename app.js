@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   ASENORTE · app.js (VERSION INTEGRAL SINCRO-FIJA)
-   Maneja la autenticación sin bloqueos y renderizado fluido.
+   ASENORTE · app.js (VERSIÓN FINAL DE ACCESO FIJO)
+   Maneja login, lectura y escritura en Google Sheets sin bloqueos.
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
@@ -12,15 +12,15 @@ const CONFIG = {
 let currentUser = null;
 let allPatients  = [];
 
+// ── Inicialización Única del Sistema ──────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  // Asegurar visibilidad correcta de pantallas al inicio
   const loginScreen = document.getElementById("loginScreen");
   const dashboardScreen = document.getElementById("dashboardScreen");
   
   if (loginScreen) loginScreen.style.setProperty("display", "flex", "important");
   if (dashboardScreen) dashboardScreen.style.display = "none";
 
-  // Control dinámico del ojo de contraseña
+  // Control de visibilidad de contraseña (Ojito)
   const btnTogglePassword = document.getElementById("btnTogglePassword");
   const passwordInput = document.getElementById("password");
   const eyeIcon = document.getElementById("eyeIcon");
@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Cargar sesión guardada si existe
+  // Auto-recuperar sesión académica activa
   try {
     const saved = sessionStorage.getItem("asenorte_user");
     if (saved) {
@@ -55,11 +55,11 @@ window.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem("asenorte_user");
   }
 
-  // Enlazar formularios
+  // Escuchador de Envío de Formulario de Entrada
   document.getElementById("loginForm")?.addEventListener("submit", handleLogin);
 });
 
-// ── PROCESAMIENTO DE LOGIN FIJO ──
+// ── PROCESAMIENTO E INGRESO AL SISTEMA ─────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
   
@@ -71,14 +71,13 @@ async function handleLogin(e) {
   if (errEl) hide(errEl);
 
   if (!userIn || !passIn) {
-    if (errEl) showError(errEl, "Completa todos los campos obligatorios.");
+    if (errEl) showError(errEl, "Por favor, digite su usuario y contraseña.");
     return;
   }
 
   if (btn) setLoading(btn, true, "Iniciar Sesión");
 
   try {
-    // Envío seguro optimizado para Apps Script sin disparar CORS preflight restrictivo
     const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "cors",
@@ -90,7 +89,8 @@ async function handleLogin(e) {
       })
     });
 
-    if (!response.ok) throw new Error(`HTTP Código: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+    
     const res = await response.json();
 
     if (res.success) {
@@ -98,11 +98,11 @@ async function handleLogin(e) {
       sessionStorage.setItem("asenorte_user", JSON.stringify(currentUser));
       openDashboard();
     } else {
-      if (errEl) showError(errEl, res.message || "Credenciales incorrectas.");
+      if (errEl) showError(errEl, res.message || "Usuario o contraseña inválidos.");
     }
   } catch (error) {
-    console.error("Detalle Error Acceso:", error);
-    if (errEl) showError(errEl, "Error de red o denegación de acceso desde el servidor.");
+    console.error("Error detectado:", error);
+    if (errEl) showError(errEl, "Error de enlace: Verifica las columnas de tu Google Sheet o publica una nueva versión del Script.");
   } finally {
     if (btn) setLoading(btn, false, "Iniciar Sesión");
   }
