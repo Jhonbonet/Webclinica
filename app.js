@@ -5,7 +5,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/TU_ID_AQUI/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby0Tn397F1dyRO42JAtc8q4q-44v6YuUMVsGDkHsC4k83-Rk89sZKGqcPz7wzn1Uhk6UA/exec",
 };
 
 // ─────────────────────────────────────────────────────────────
