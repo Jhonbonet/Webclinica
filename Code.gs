@@ -47,7 +47,7 @@
 //   M004 | Dra. Luisa Fernández      | Ginecología           | {"lunes":["14:00","15:00","16:00"],"miercoles":["08:00","09:00","10:00","11:00"],"viernes":["08:00","09:00","10:00"]}                                                                                  | TRUE
 // ═══════════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = "TU_SPREADSHEET_ID_AQUI";
+var SPREADSHEET_ID = "1U_qRYdAe9HdbeJ1M_JSxtBNmjZwRn7nYcVoaEl29EvY";
 
 // ── Cabeceras ────────────────────────────────────────────────
 
