@@ -47,7 +47,7 @@
 //   M004 | Dra. Luisa Fernández      | Ginecología           | {"lunes":["14:00","15:00","16:00"],"miercoles":["08:00","09:00","10:00","11:00"],"viernes":["08:00","09:00","10:00"]}                                                                                  | TRUE
 // ═══════════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = "1U_qRYdAe9HdbeJ1M_JSxtBNmjZwRn7nYcVoaEl29EvY";
+var SPREADSHEET_ID = "TU_SPREADSHEET_ID_AQUI";
 
 // ── Cabeceras ────────────────────────────────────────────────
 
@@ -131,64 +131,89 @@ var CITAS_HEADERS = [
   "notas","penalidad","fechaCancelacion","motivoCancelacion"
 ];
 
+
 // ════════════════════════════════════════════════════════════
 // ── GET ─────────────────────────────────────────────────────
 // ════════════════════════════════════════════════════════════
+// SOLUCIÓN CORS: Los navegadores bloquean POST con Content-Type:application/json
+// desde GitHub Pages hacia Google Apps Script (preflight OPTIONS rechazado).
+// SOLUCIÓN APLICADA: el frontend envía TODAS las operaciones como GET.
+//   - Lecturas: ?action=getXxx&param=valor  (igual que antes)
+//   - Escrituras: ?payload={"action":"saveXxx","campo":"valor",...}
+// doGet detecta si hay "payload" y enruta a routeWrite().
+// doPost se mantiene como fallback (Postman, server-side, etc.)
+// ════════════════════════════════════════════════════════════
 function doGet(e) {
+  var result;
+
+  // ── Escrituras enviadas como GET (fix CORS) ──────────────
+  if (e.parameter.payload) {
+    try {
+      var body = JSON.parse(e.parameter.payload);
+      result = routeWrite(body);
+    } catch(ex) {
+      result = { success: false, message: "Payload JSON inválido: " + ex.message };
+    }
+    return jsonResponse(result);
+  }
+
+  // ── Lecturas normales ────────────────────────────────────
   var action = e.parameter.action;
-  var result;
 
-  if      (action === "login")              result = loginUser(e.parameter.usuario, e.parameter.password);
-  else if (action === "getHistorias")       result = getSheet("HistoriasClinicas", HC_HEADERS);
-  else if (action === "getAdmisiones")      result = getSheet("Admisiones", ADMISION_HEADERS);
-  else if (action === "getKardex")          result = getSheetFiltered("Kardex", KARDEX_HEADERS, e.parameter.pacienteId);
-  else if (action === "getSignosVitales")   result = getSheetFiltered("SignosVitales", SIGNOS_HEADERS, e.parameter.pacienteId);
-  else if (action === "getBalance")         result = getSheetFiltered("BalanceHidrico", BALANCE_HEADERS, e.parameter.pacienteId);
-  else if (action === "getNotas")           result = getSheetFiltered("NotasEnfermeria", NOTAS_HEADERS, e.parameter.pacienteId);
-  else if (action === "getConsentimientos") result = getSheet("Consentimientos", CONSENTIMIENTO_HEADERS);
-  else if (action === "getEpicrisis")       result = getSheet("Epicrisis", EPICRISIS_HEADERS);
-  else if (action === "getSolicitudes")     result = getSheetFiltered("SolicitudesPaciente", SOLICITUDES_HEADERS, e.parameter.pacienteId);
-  else if (action === "getEvaluaciones")    result = getSheet("Evaluaciones", EVALUACIONES_HEADERS);
-  else if (action === "getPacientes")       result = getPacientesUnicos();
-  // ── NUEVAS ACCIONES v3.0 ──
-  else if (action === "getMedicos")         result = getMedicos();
-  else if (action === "getCitas")           result = getCitas(e.parameter.pacienteId, e.parameter.medicoId);
-  else if (action === "getUsuarios")        result = getUsuarios(e.parameter.solicitante);
+  if      (action === "login")                result = loginUser(e.parameter.usuario, e.parameter.password);
+  else if (action === "getHistorias")         result = getSheet("HistoriasClinicas", HC_HEADERS);
+  else if (action === "getAdmisiones")        result = getSheet("Admisiones", ADMISION_HEADERS);
+  else if (action === "getKardex")            result = getSheetFiltered("Kardex", KARDEX_HEADERS, e.parameter.pacienteId);
+  else if (action === "getSignosVitales")     result = getSheetFiltered("SignosVitales", SIGNOS_HEADERS, e.parameter.pacienteId);
+  else if (action === "getBalance")           result = getSheetFiltered("BalanceHidrico", BALANCE_HEADERS, e.parameter.pacienteId);
+  else if (action === "getNotas")             result = getSheetFiltered("NotasEnfermeria", NOTAS_HEADERS, e.parameter.pacienteId);
+  else if (action === "getConsentimientos")   result = getSheet("Consentimientos", CONSENTIMIENTO_HEADERS);
+  else if (action === "getEpicrisis")         result = getSheet("Epicrisis", EPICRISIS_HEADERS);
+  else if (action === "getSolicitudes")       result = getSheetFiltered("SolicitudesPaciente", SOLICITUDES_HEADERS, e.parameter.pacienteId);
+  else if (action === "getEvaluaciones")      result = getSheet("Evaluaciones", EVALUACIONES_HEADERS);
+  else if (action === "getPacientes")         result = getPacientesUnicos();
+  else if (action === "getMedicos")           result = getMedicos();
+  else if (action === "getCitas")             result = getCitas(e.parameter.pacienteId, e.parameter.medicoId);
+  else if (action === "getUsuarios")          result = getUsuarios(e.parameter.solicitante);
   else if (action === "getHistorialPaciente") result = getHistorialCompleto(e.parameter.pacienteId);
-  else result = { success: false, message: "Acción no reconocida: " + action };
+  else result = { success: false, message: "Acción GET no reconocida: " + action };
 
   return jsonResponse(result);
 }
 
-// ════════════════════════════════════════════════════════════
-// ── POST ────────────────────────────────────────────────────
-// ════════════════════════════════════════════════════════════
-function doPost(e) {
-  var body   = JSON.parse(e.postData.contents);
+// ── Enrutador de escrituras compartido por doGet(payload) y doPost ──
+function routeWrite(body) {
   var action = body.action;
-  var result;
-
-  if      (action === "saveHistoria")       result = saveRow("HistoriasClinicas", HC_HEADERS, body);
-  else if (action === "saveAdmision")       result = saveRow("Admisiones", ADMISION_HEADERS, body);
-  else if (action === "saveKardex")         result = saveRow("Kardex", KARDEX_HEADERS, body);
-  else if (action === "saveSignosVitales")  result = saveRow("SignosVitales", SIGNOS_HEADERS, body);
-  else if (action === "saveBalance")        result = saveRow("BalanceHidrico", BALANCE_HEADERS, body);
-  else if (action === "saveNota")           result = saveRow("NotasEnfermeria", NOTAS_HEADERS, body);
-  else if (action === "saveConsentimiento") result = saveRow("Consentimientos", CONSENTIMIENTO_HEADERS, body);
-  else if (action === "saveEpicrisis")      result = saveRow("Epicrisis", EPICRISIS_HEADERS, body);
-  else if (action === "saveSolicitud")      result = saveRow("SolicitudesPaciente", SOLICITUDES_HEADERS, body);
-  else if (action === "saveEvaluacion")     result = saveRow("Evaluaciones", EVALUACIONES_HEADERS, body);
-  else if (action === "responderSolicitud") result = responderSolicitud(body);
-  // ── NUEVAS ACCIONES v3.0 ──
-  else if (action === "saveCita")           result = saveCita(body);
-  else if (action === "cancelarCita")       result = cancelarCita(body);
-  else if (action === "reprogramarCita")    result = reprogramarCita(body);
-  else if (action === "crearUsuario")       result = crearUsuario(body);
-  else if (action === "toggleUsuario")      result = toggleUsuario(body);
-  else result = { success: false, message: "Acción no reconocida: " + action };
-
-  return jsonResponse(result);
+  if      (action === "saveHistoria")       return saveRow("HistoriasClinicas", HC_HEADERS, body);
+  else if (action === "saveAdmision")       return saveRow("Admisiones", ADMISION_HEADERS, body);
+  else if (action === "saveKardex")         return saveRow("Kardex", KARDEX_HEADERS, body);
+  else if (action === "saveSignosVitales")  return saveRow("SignosVitales", SIGNOS_HEADERS, body);
+  else if (action === "saveBalance")        return saveRow("BalanceHidrico", BALANCE_HEADERS, body);
+  else if (action === "saveNota")           return saveRow("NotasEnfermeria", NOTAS_HEADERS, body);
+  else if (action === "saveConsentimiento") return saveRow("Consentimientos", CONSENTIMIENTO_HEADERS, body);
+  else if (action === "saveEpicrisis")      return saveRow("Epicrisis", EPICRISIS_HEADERS, body);
+  else if (action === "saveSolicitud")      return saveRow("SolicitudesPaciente", SOLICITUDES_HEADERS, body);
+  else if (action === "saveEvaluacion")     return saveRow("Evaluaciones", EVALUACIONES_HEADERS, body);
+  else if (action === "responderSolicitud") return responderSolicitud(body);
+  else if (action === "saveCita")           return saveCita(body);
+  else if (action === "cancelarCita")       return cancelarCita(body);
+  else if (action === "reprogramarCita")    return reprogramarCita(body);
+  else if (action === "crearUsuario")       return crearUsuario(body);
+  else if (action === "toggleUsuario")      return toggleUsuario(body);
+  else return { success: false, message: "Acción de escritura no reconocida: " + action };
 }
+
+// ── POST: fallback para Postman / llamadas server-side ──────
+function doPost(e) {
+  try {
+    var body   = JSON.parse(e.postData.contents);
+    var result = routeWrite(body);
+    return jsonResponse(result);
+  } catch(ex) {
+    return jsonResponse({ success: false, message: "Error en doPost: " + ex.message });
+  }
+}
+
 
 // ════════════════════════════════════════════════════════════
 // ── AUTH ────────────────────────────────────────────────────

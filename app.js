@@ -5,7 +5,7 @@
 ═══════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyVQ4K5dCfbaKP2Ep4BCrPsOlyKpPLBIEhgCqKho_VXRfiZuWmXPMixc8XJuqwNzu5a/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/TU_ID_AQUI/exec",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1353,14 +1353,26 @@ function today() { return new Date().toISOString().split("T")[0]; }
 function timeNow() { return new Date().toLocaleTimeString("es-CO", { hour:"2-digit", minute:"2-digit" }); }
 function now() { return new Date().toISOString(); }
 
+// ── API helpers ─────────────────────────────────────────────
+// GAS no acepta preflight CORS (OPTIONS). Solución:
+//   GET  → fetch normal con parámetros en URL
+//   POST → fetch con no-cors NO funciona (opaque response).
+//          La técnica correcta: enviar todo como GET con ?payload=JSON
+//          GAS recibe en e.parameter.payload y lo parsea.
+//          Así nunca hay preflight y funciona desde GitHub Pages.
+
 async function apiFetch(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, { redirect: "follow" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
   return res.json();
 }
+
 async function apiPost(body) {
-  const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body),
-  });
+  // Codificamos el body completo como un único parámetro GET llamado "payload"
+  const payload    = encodeURIComponent(JSON.stringify(body));
+  const url        = `${CONFIG.APPS_SCRIPT_URL}?payload=${payload}`;
+  const res        = await fetch(url, { redirect: "follow" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
   return res.json();
 }
 
