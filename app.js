@@ -9,8 +9,8 @@
        - SUPABASE_KEY  → Panel Supabase > Settings > API > anon public
    ════════════════════════════════════════════════ */
 
-const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
-const SUPABASE_KEY = 'TU_ANON_KEY';
+const SUPABASE_URL = 'https://qbtnbwgwydljtsemviiv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tmnl-1UYaCz6SDecgp6Aww_26vn7pnk';
 
 document.addEventListener('DOMContentLoaded', () => {
 
