@@ -9,8 +9,8 @@
        - SUPABASE_KEY  → Panel Supabase > Settings > API > anon public
    ════════════════════════════════════════════════ */
 
-const SUPABASE_URL = 'https://qbtnbwgwydljtsemviiv.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tmnl-1UYaCz6SDecgp6Aww_26vn7pnk';
+const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+const SUPABASE_KEY = 'TU_ANON_KEY';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -101,34 +101,85 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ══════════════════════════════════════
-     LOGIN
+     SESIÓN LOCAL  (sin Supabase Auth)
+     Almacena el usuario activo en
+     sessionStorage para persistir durante
+     la pestaña sin requerir Auth de Supabase.
+     La tabla Usuarios debe tener las cols:
+       id (bigint PK), nombre (text), rol (text)
+       y una col  "password" (text) con la
+       contraseña en texto plano o hash MD5.
+     ⚠️ Para producción usa hashing (bcrypt).
   ══════════════════════════════════════ */
-  document.getElementById('btnLogin').addEventListener('click', async () => {
-    const email    = document.getElementById('loginEmail').value.trim();
+
+  // ── Mostrar/ocultar contraseña ──
+  document.getElementById('pwToggle').addEventListener('click', () => {
+    const inp = document.getElementById('loginPassword');
+    const btn = document.getElementById('pwToggle');
+    if (inp.type === 'password') { inp.type = 'text';     btn.textContent = '🙈'; }
+    else                         { inp.type = 'password'; btn.textContent = '👁'; }
+  });
+
+  // ── Lógica de login ──
+  document.getElementById('btnLogin').addEventListener('click', doLogin);
+  ['loginId','loginPassword'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  async function doLogin() {
+    const userId   = parseInt(document.getElementById('loginId').value.trim());
     const password = document.getElementById('loginPassword').value;
     const errEl    = document.getElementById('loginError');
     errEl.textContent = '';
 
-    if (!email || !password) { errEl.textContent = 'Completa todos los campos.'; return; }
+    if (!userId || !password) {
+      errEl.textContent = 'Ingresa tu ID de usuario y contraseña.';
+      return;
+    }
 
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
-    if (error) { errEl.textContent = error.message; return; }
+    // Consultar la tabla Usuarios por id
+    const { data, error } = await db
+      .from('Usuarios')
+      .select('id, nombre, rol, password')
+      .eq('id', userId)
+      .single();
 
-    document.getElementById('userBadge').textContent = data.user.email;
+    if (error || !data) {
+      errEl.textContent = 'Usuario no encontrado. Verifica tu ID.';
+      return;
+    }
+
+    // Verificar contraseña (comparación directa — usa hash en producción)
+    if (data.password !== password) {
+      errEl.textContent = 'Contraseña incorrecta.';
+      return;
+    }
+
+    // Guardar sesión local
+    sessionStorage.setItem('snUser', JSON.stringify({
+      id:     data.id,
+      nombre: data.nombre,
+      rol:    data.rol,
+    }));
+
+    enterDashboard(data);
+  }
+
+  function enterDashboard(user) {
+    document.getElementById('userBadge').innerHTML =
+      `<strong>${user.nombre}</strong><br><span style="font-size:.72rem;opacity:.7">${user.rol} · ID ${user.id}</span>`;
     showScreen('dashboardScreen');
     initDashboard();
-  });
+  }
 
-  document.getElementById('btnLogout').addEventListener('click', async () => {
-    await db.auth.signOut();
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    sessionStorage.removeItem('snUser');
     showScreen('loginScreen');
-  });
-
-  /* Allow Enter key on login */
-  ['loginEmail','loginPassword'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btnLogin').click();
-    });
+    document.getElementById('loginId').value       = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').textContent = '';
   });
 
   /* ══════════════════════════════════════
@@ -651,17 +702,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ══════════════════════════════════════
-     CHECK SESSION ON LOAD
-     (Si hay sesión activa, ir al dashboard)
+     RESTAURAR SESIÓN AL RECARGAR
+     (persiste mientras la pestaña esté abierta)
   ══════════════════════════════════════ */
-  (async () => {
-    const { data: { session } } = await db.auth.getSession();
-    if (session) {
-      document.getElementById('userBadge').textContent = session.user.email;
-      showScreen('dashboardScreen');
-      initDashboard();
+  (() => {
+    const stored = sessionStorage.getItem('snUser');
+    if (stored) {
+      try {
+        const user = JSON.parse(stored);
+        enterDashboard(user);
+      } catch (_) {
+        sessionStorage.removeItem('snUser');
+      }
     }
-    // else: loginScreen is already active via HTML class
+    // else: loginScreen ya tiene clase active en el HTML
   })();
 
 }); // end DOMContentLoaded

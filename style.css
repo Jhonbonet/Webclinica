@@ -161,6 +161,30 @@ body {
   box-shadow: 0 0 0 3px rgba(61,189,208,.18);
 }
 
+/* ── Password toggle wrapper ── */
+.pw-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pw-wrap input {
+  flex: 1;
+  padding-right: 44px !important;
+}
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: rgba(255,255,255,.5);
+  transition: color .2s;
+  padding: 0;
+  line-height: 1;
+}
+.pw-toggle:hover { color: rgba(255,255,255,.9); }
+
 .error-msg {
   color: #ff7070;
   font-size: .82rem;
